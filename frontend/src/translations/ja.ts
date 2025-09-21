@@ -1,0 +1,32 @@
+import { Translations } from '../types/language';
+
+export const ja: Translations = {
+  storyNest: 'ストーリーの巣',
+  surpriseMe: 'サプライズして!',
+  guidedStory: 'ガイド付きストーリー',
+  myOwnIdea: '私のアイデア',
+  listen: '聞く',
+  save: '保存',
+  images: '画像',
+  generateStory: '私のストーリーを作る!',
+  backToMenu: 'メニューに戻る',
+  clickToRead: 'クリックして全文を読む',
+  listeningToStory: 'ストーリーを聞いています',
+  creatingMagic: '魔法のストーリーを作成中...',
+  readyToHelp: 'お手伝いの準備ができました!',
+  hopeYouEnjoyed: 'あなたが魔法のストーリーを楽しんでいただけたでしょうか!',
+  chooseTheme: 'ストーリーのテーマを選択',
+  mainCharacter: '主人公',
+  companion: '仲間',
+  setting: 'ストーリーはどこで起こりますか?',
+  challenge: 'ストーリーのチャレンジ',
+  tone: 'ストーリーのトーン',
+  values: 'ストーリーの価値観（複数選択）',
+  tellUsIdea: 'あなたのストーリーのアイデアを教えてください',
+  language: '言語',
+  letAiCreate: 'AIにあなたのための魔法のストーリーを作ってもらいましょう!',
+  readyForAdventure: '魔法の冒険の準備はできましたか?',
+  clickButtonBelow: '下のボタンをクリックして、AIに素晴らしいユニークなストーリーを作ってもらいましょう!',
+  chooseAdventure: 'ステップバイステップで冒険を選んでください!',
+  storyBook: '絵本'
+};

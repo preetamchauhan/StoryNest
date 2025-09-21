@@ -1,0 +1,32 @@
+import { Translations } from '../types/language';
+
+export const ko: Translations = {
+  storyNest: '이야기 둥지',
+  surpriseMe: '놀라게 해주세요!',
+  guidedStory: '가이드 스토리',
+  myOwnIdea: '나만의 아이디어',
+  listen: '듣기',
+  save: '저장',
+  images: '이미지',
+  generateStory: '내 이야기 만들기!',
+  backToMenu: '메뉴로 돌아가기',
+  clickToRead: '전체 이야기를 읽으려면 클릭하세요',
+  listeningToStory: '이야기를 듣는 중',
+  creatingMagic: '마법의 이야기로 만드는 중...',
+  readyToHelp: '도움을 드릴 준비가 되었습니다!',
+  hopeYouEnjoyed: '마법의 이야기를 즐기셨기를 바랍니다!',
+  chooseTheme: '이야기 주제 선택',
+  mainCharacter: '주인공',
+  companion: '동반자',
+  setting: '이야기는 어디서 일어나나요?',
+  challenge: '이야기 도전',
+  tone: '이야기 톤',
+  values: '이야기 가치관 (여러 개 선택)',
+  tellUsIdea: '당신의 이야기 아이디어를 알려주세요',
+  language: '언어',
+  letAiCreate: 'AI가 당신을 위한 마법의 이야기를 만들어 드립니다!',
+  readyForAdventure: '마법의 모험을 준비하셨나요?',
+  clickButtonBelow: '아래 버튼을 클릭하여 AI가 당신을 위한 멋진 독특한 이야기를 만들어 드리도록 하세요!',
+  chooseAdventure: '단계별로 모험을 선택하세요!',
+  storyBook: '이야기책'
+};

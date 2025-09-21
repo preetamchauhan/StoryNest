@@ -2,21 +2,21 @@ import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useApp } from '../contexts/AppContext';
-import { useStream } from '../hooks/useStream';
-import ChatInterface from './Chatterface';
+import { useStream } from '../hooks/useStreams';
+import ChatInterface from './ChatInterface';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const GuidedStory: React.FC = () => {
   const { age } = useApp();
-  const { t, currentLanguage, setLanguageSelectionDisabled } = useLanguage();
+  const { t, currentLanguage, setIsLanguageSelectionDisabled } = useLanguage();
   const { events, isStreaming, startStream, clearEvents } = useStream();
   const [showChat, setShowChat] = useState(false);
 
   // Disable language selection when component mounts
   React.useEffect(() => {
-    setLanguageSelectionDisabled(true);
-    return () => setLanguageSelectionDisabled(false); // Re-enable on unmount
-  }, [setLanguageSelectionDisabled]);
+    setIsLanguageSelectionDisabled(true);
+    return () => setIsLanguageSelectionDisabled(false); // Re-enable on unmount
+  }, [setIsLanguageSelectionDisabled]);
 
   const [guidedData, setGuidedData] = useState({
     theme: '',
@@ -329,7 +329,7 @@ return (
         Creating Your Story...
       </span>
     ) : (
-      {{t('generateStory')}}
+     <>🚀 {t('generateStory')}</>
     )}
   </Button>
 </div>

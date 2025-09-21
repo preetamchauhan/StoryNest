@@ -1,0 +1,237 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 14% 96%;
+    --foreground: 220 9% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 9% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 9% 9%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 9% 9%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 220 9% 9%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 262 83% 58%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 220 27% 6%;
+    --foreground: 210 20% 98%;
+    --card: 220 27% 12%;
+    --card-foreground: 210 20% 98%;
+    --popover: 220 27% 12%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 220 27% 16%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 220 27% 16%;
+    --muted-foreground: 220 9% 64%;
+    --accent: 220 27% 16%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 220 27% 16%;
+    --input: 220 27% 16%;
+    --ring: 262 83% 58%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Kid-friendly animations */
+@keyframes bounce-gentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-3deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+
+.animate-bounce-gentle {
+  animation: bounce-gentle 2s infinite;
+}
+
+.animate-wiggle {
+  animation: wiggle 1s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out;
+}
+
+/* Line clamp utility */
+.line-clamp-4 {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Custom audio slider styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-track {
+  background: #e5e7eb;
+  height: 8px;
+  border-radius: 4px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(45deg, #3b82f6, #b5c6f6);
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-track {
+  background: #e5e7eb;
+  height: 8px;
+  border-radius: 4px;
+  border: none;
+}
+
+input[type="range"]::-moz-range-thumb {
+  background: linear-gradient(45deg, #3b82f6, #b5c6f6);
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  cursor: pointer;
+}
+
+/* RTL Support for Arabic */
+[dir="rtl"] {
+  text-align: right;
+}
+
+/* Disable flex-direction changes that cause layout issues */
+[dir="rtl"] .flex:not(.rtl-safe) {
+  /* Don’t reverse all flex containers */
+}
+
+/* Only reverse specific spacing */
+[dir="rtl"] .space-x-2:not(.rtl-safe) > * + * {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+[dir="rtl"] .space-x-3:not(.rtl-safe) > * + * {
+  margin-left: 0;
+  margin-right: 0.75rem;
+}
+
+[dir="rtl"] .space-x-4:not(.rtl-safe) > * + * {
+  margin-left: 0;
+  margin-right: 1rem;
+}
+
+[dir="rtl"] .space-x-4:not(.rtl-safe) > * + * {
+  margin-left: 0;
+  margin-right: 1rem;
+}
+
+/* Safe RTL handling for critical components */
+[dir="rtl"] .rtl-safe {
+  /** Preserve original layout for components that handle RTL internally */
+}
+
+/* Multi-language font support */
+.multi-lang {
+  font-family: 'Inter', 'Noto Sans CJK JP', 'Noto Sans CJK KR', 'Noto Sans Devanagari', 'Noto Sans Arabic',
+    system-ui, sans-serif;
+}
+
+/* Arabic text rendering improvements */
+[dir="rtl"] {
+  font-family: 'Noto Sans Arabic', 'Arial', sans-serif;
+}
+
+/* Prevent layout breaks in Arabic */
+[dir="rtl"] {
+  word-wrap: break-word;
+}
+
+/* Body class-based RTL handling (safer) */
+body.rtl-mode {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Noto Sans Arabic', 'Arial', sans-serif;
+}
+
+body.ltr-mode {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Prevent specific layout issues in RTL */
+body.rtl-mode .flex {
+  /* Don’t auto-reverse all flex containers */
+}
+
+body.rtl-mode input,
+body.rtl-mode textarea {
+  text-align: right;
+}
+
+body.ltr-mode input,
+body.ltr-mode textarea {
+  text-align: left;
+}

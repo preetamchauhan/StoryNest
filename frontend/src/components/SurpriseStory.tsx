@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { useApp } from "../contexts/AppContext";
-import { useStream } from "../hooks/useStream";
+import { useStream } from "../hooks/useStreams";
 import ChatInterface from "./ChatInterface";
 import { useLanguage } from "../contexts/LanguageContext";
 

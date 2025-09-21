@@ -1,0 +1,32 @@
+import { Translations } from '../types/language';
+
+export const en: Translations = {
+  storyNest: 'Story Nest',
+  surpriseMe: 'Surprise Me!',
+  guidedStory: 'Guided Story',
+  myOwnIdea: 'My Own Idea',
+  listen: 'Listen',
+  save: 'Save',
+  images: 'Images',
+  generateStory: 'Generate My Story!',
+  backToMenu: 'Back to Menu',
+  clickToRead: 'Click to read full story',
+  listeningToStory: 'Listening to Story',
+  creatingMagic: 'Creating your magical story...',
+  readyToHelp: 'Ready to help!',
+  hopeYouEnjoyed: 'Hope you enjoyed your magical story!',
+  chooseTheme: 'Choose Your Story Theme',
+  mainCharacter: 'Main Character',
+  companion: 'Companion',
+  setting: 'Where does the story happen?',
+  challenge: 'Story Challenge',
+  tone: 'Story Tone',
+  values: 'Story Values (select multiple)',
+  tellUsIdea: 'Tell Us Your Story Idea',
+  language: 'Language',
+  letAiCreate: 'Let AI create a magical story just for you!',
+  readyForAdventure: 'Ready for a magical adventure?',
+  clickButtonBelow: 'Click the button below and let our AI create a wonderful, unique story just for you!',
+  chooseAdventure: 'Choose your adventure step by step!',
+  storyBook: 'Story Book'
+};

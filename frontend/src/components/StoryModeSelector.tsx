@@ -2,11 +2,11 @@ import React from 'react';
 import { Card, CardHeader, CardTitle } from './ui/card';
 import { useLanguage } from '../contexts/LanguageContext';
 
-interface StoryModeSelectorProps {
+interface StoryModeSelector {
   onModeSelect: (mode: 'surprise' | 'guided' | 'freeform') => void;
 }
 
-const StoryModeSelector: React.FC<StoryModeSelectorProps> = ({ onModeSelect }) => {
+const StoryModeSelector: React.FC<StoryModeSelector> = ({ onModeSelect }) => {
   const { t } = useLanguage();
 
   const modeOptions = [

@@ -1,0 +1,32 @@
+import { Translations } from '../types/language';
+
+export const hi: Translations = {
+  storyNest: 'कहानियों का घोंसला',
+  surpriseMe: 'मुझे आश्चर्यचकित करो!',
+  guidedStory: 'निर्देशित कहानी',
+  myOwnIdea: 'मेरा अपना विचार',
+  listen: 'सुनो',
+  save: 'सेव करें',
+  images: 'चित्र',
+  generateStory: 'मेरी कहानी बनाओ!',
+  backToMenu: 'मेनू पर वापस जाएं',
+  clickToRead: 'पूरी कहानी पढ़ने के लिए क्लिक करें',
+  listeningToStory: 'कहानी सुन रहे हैं',
+  creatingMagic: 'आपकी जादुई कहानी बना रहे हैं...',
+  readyToHelp: 'मदद के लिए तैयार!',
+  hopeYouEnjoyed: 'आशा है आपको अपनी जादुई कहानी पसंद आई!',
+  chooseTheme: 'अपनी कहानी का विषय चुनें',
+  mainCharacter: 'मुख्य पात्र',
+  companion: 'साथी',
+  setting: 'कहानी कहाँ होती है?',
+  challenge: 'कहानी की चुनौती',
+  tone: 'कहानी का सुर',
+  values: 'कहानी के मूल्य (कई चुनें)',
+  tellUsIdea: 'हमें अपनी कहानी का विचार बताएं',
+  language: 'भाषा',
+  letAiCreate: 'AI को आपके लिए एक जादुई कहानी बनाने दें!',
+  readyForAdventure: 'जादुई रोमांच के लिए तैयार?',
+  clickButtonBelow: 'नीचे दिए बटन पर क्लिक करें और हमारी AI को आपके लिए एक अद्भुत कहानी बनाने दें!',
+  chooseAdventure: 'अपना रोमांच कदम दर कदम चुनें!',
+  storyBook: 'कहानियों की किताब'
+};

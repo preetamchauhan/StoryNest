@@ -1,0 +1,32 @@
+import { Translations } from '../types/language';
+
+export const fr: Translations = {
+  storyNest: 'Nid d\'Histoires',
+  surpriseMe: 'Surprends-moi !',
+  guidedStory: 'Histoire Guidée',
+  myOwnIdea: 'Ma Propre Idée',
+  listen: 'Écouter',
+  save: 'Sauvegarder',
+  images: 'Images',
+  generateStory: 'Créer Mon Histoire !',
+  backToMenu: 'Retour au Menu',
+  clickToRead: 'Cliquez pour lire l\'histoire complète',
+  listeningToStory: 'Écoutant l\'Histoire',
+  creatingMagic: 'Création de votre histoire magique...',
+  readyToHelp: 'Prêt à aider !',
+  hopeYouEnjoyed: 'J\'espère que vous avez aimé votre histoire magique !',
+  chooseTheme: 'Choisissez le Thème de votre Histoire',
+  mainCharacter: 'Personnage Principal',
+  companion: 'Compagnon',
+  setting: 'Où se déroule l\'histoire ?',
+  challenge: 'Défi de l\'Histoire',
+  tone: 'Ton de l\'Histoire',
+  values: 'Valeurs de l\'Histoire (sélectionner plusieurs)',
+  tellUsIdea: 'Dites-nous votre Idée d\'Histoire',
+  language: 'Langue',
+  letAiCreate: 'Laissez l\'IA créer une histoire magique pour vous !',
+  readyForAdventure: 'Prêt pour une aventure magique ?',
+  clickButtonBelow: 'Cliquez sur le bouton ci-dessous et laissez notre IA créer une histoire merveilleuse et unique pour vous !',
+  chooseAdventure: 'Choisissez votre aventure étape par étape !',
+  storyBook: 'Livre d\'Histoires'
+};
