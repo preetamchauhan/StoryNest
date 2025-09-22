@@ -60,7 +60,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
             <div className="cursor-pointer group" onClick={handleHomeClick}>
               <h1 className="text-xl sm:text-3xl font-extrabold text-purple-600 bg-gradient-to-r from-purple-600 via-pink-500 to-blue-500 bg-clip-text text-transparent drop-shadow-sm group-hover:scale-105 transition-transform duration-200 leading-tight">
-                Story Nest
+                {t('storyNest')}
               </h1>
               <p className="text-xs sm:text-sm bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 bg-clip-text text-transparent font-semibold tracking-wide group-hover:from-pink-500 group-hover:to-blue-500 transition-all duration-300 hidden sm:block">
                 Where imagination comes alive ✨
