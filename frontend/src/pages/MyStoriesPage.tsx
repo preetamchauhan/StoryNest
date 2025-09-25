@@ -4,34 +4,35 @@ import { useLanguage } from '../contexts/LanguageContext';
 import StoryViewer from '../components/StoryViewer';
 import KidAudioPlayer from '../components/KidAudioPlayer';
 import StoryTextViewer from '../components/StoryTextViewer';
+import { getStories, searchStories, deleteStory as apiDeleteStory, apiRequest } from '../lib/api';
 
 interface SavedStory {
   id: string;
   title: string;
   text: string;
   language: string;
-  age: number;
-  createdAt: string;
   audioUrl?: string;
+  createdAt: string;
   framesData?: any;
   imagePaths?: string[];
 }
 
 const MyStoriesPage: React.FC = () => {
-  const { t } = useLanguage();
+  const t = useLanguage();
   const navigate = useNavigate();
   const [savedStories, setSavedStories] = useState<SavedStory[]>([]);
   const [selectedStory, setSelectedStory] = useState<SavedStory | null>(null);
-  const [showStoryViewer, setShowStoryViewer] = useState(false);
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
   const [audioStory, setAudioStory] = useState<SavedStory | null>(null);
-  const [textStory, setTextStory] = useState<SavedStory | null>(null);
   const [showTextViewer, setShowTextViewer] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [textStory, setTextStory] = useState<SavedStory | null>(null);
+  const [showStoryViewer, setShowStoryViewer] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalStories, setTotalStories] = useState(0);
   const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(true);
   const storiesPerPage = 6;
 
   useEffect(() => {
@@ -43,27 +44,28 @@ const MyStoriesPage: React.FC = () => {
     const timeoutId = setTimeout(() => {
       performSearch(searchQuery);
     }, 1000);
-
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
   const loadSavedStories = async (page: number = 1, append: boolean = false) => {
     try {
+      if (!append) setLoading(true);
       const offset = (page - 1) * storiesPerPage;
-      const response = await fetch(`http://localhost:8000/api/stories?offset=${offset}&limit=${storiesPerPage}`);
-      const result = await response.json();
+      const result = await getStories(offset, storiesPerPage);
 
       if (result.success) {
         const total = parseInt(result.message.split(':')[1] || '0');
         setTotalStories(total);
         setHasMore(offset + result.stories.length < total);
 
-        console.log("📖 Loaded stories:", result.stories.map((s: any) => ({
+        // Debug: Log story data to see what’s loaded
+        console.log('Loaded stories:', result.stories.map((s: any) => ({
           id: s.id,
           title: s.title,
-          audioUrl: s.audioUrl,
+          hasAudio: !!s.audioUrl,
           hasFramesData: !!s.framesData,
           hasImagePaths: !!s.imagePaths,
+          rawStory: s,
         })));
 
         if (append) {
@@ -72,20 +74,18 @@ const MyStoriesPage: React.FC = () => {
           setSavedStories(result.stories);
         }
       } else {
-        console.error("Failed to load stories:", result.error);
+        console.error('Failed to load stories:', result.error);
       }
     } catch (error) {
-      console.error("Failed to load stories:", error);
+      console.error('Failed to load stories:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const deleteStory = async (storyId: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/stories/${storyId}`, {
-        method: 'DELETE'
-      });
-      const result = await response.json();
-
+      const result = await apiDeleteStory(storyId);
       if (result.success) {
         setSavedStories(savedStories.filter(story => story.id !== storyId));
       } else {
@@ -104,22 +104,15 @@ const MyStoriesPage: React.FC = () => {
     }
 
     setIsSearching(true);
-
     try {
-      const response = await fetch('http://localhost:8000/api/search-stories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: query.trim(), limit: 20 })
-      });
-      const result = await response.json();
-
+      const result = await searchStories(query.trim(), 20);
       if (result.success) {
         setSavedStories(result.stories);
       } else {
-        console.error("Search failed:", result.error);
+        console.error('Search failed:', result.error);
       }
     } catch (error) {
-      console.error("Search failed:", error);
+      console.error('Search failed:', error);
     } finally {
       setIsSearching(false);
     }
@@ -167,10 +160,11 @@ const MyStoriesPage: React.FC = () => {
 
   const getLanguageFlag = (langCode: string) => {
     const flags: Record<string, string> = {
-      en: "🇺🇸", de: "🇩🇪", fr: "🇫🇷", es: "🇪🇸",
-      hi: "🇮🇳", ja: "🇯🇵", ko: "🇰🇷", ar: "🇸🇦"
+      'hi': '🇮🇳', 'en': '🇬🇧', 'es': '🇪🇸',
+      'fr': '🇫🇷', 'de': '🇩🇪', 'it': '🇮🇹',
+      'ja': '🇯🇵', 'ko': '🇰🇷', 'ar': '🇸🇦',
     };
-    return flags[langCode] || "🌐";
+    return flags[langCode] || '🌐';
   };
 
   return (
@@ -178,31 +172,23 @@ const MyStoriesPage: React.FC = () => {
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={async () => {
-                  try {
-                    await fetch('http://localhost:8000/api/clear-sessions', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                    });
-                  } catch (error) {
-                    console.error("Failed to clear server sessions:", error);
-                  }
-                  navigate('/home');
-                }}
-                className="text-purple-600 hover:text-purple-800 text-xl sm:text-2xl"
-              >
-                🏠
-              </button>
-              <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-purple-700 dark:text-purple-300">
-                My Stories
-              </h1>
-            </div>
-            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 ml-0 sm:ml-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between gap-2">
+            <button
+              onClick={async () => {
+                try {
+                  await apiRequest('/api/clear-sessions', { method: 'POST' });
+                } catch (error) {
+                  console.error('Failed to clear server sessions:', error);
+                }
+                navigate('/');
+              }}
+              className="text-purple-600 hover:text-purple-800 text-xl sm:text-2xl"
+            >
+              My Stories
+            </button>
+            <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 ml-0 sm:ml-4">
               {searchQuery ? `${savedStories.length} results` : `${savedStories.length} of ${totalStories} stories`}
-            </p>
+            </div>
           </div>
         </div>
       </div>
@@ -214,35 +200,40 @@ const MyStoriesPage: React.FC = () => {
           placeholder="Search stories..."
           value={searchQuery}
           onChange={(e) => handleSearchInput(e.target.value)}
-          className="w-full px-4 py-2 sm:py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+          className="w-full p-3 pl-10 pr-4 py-2 sm:py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm sm:text-base"
         />
+        {isSearching && <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">⏳</span>}
         {searchQuery && (
           <button
-            onClick={() => handleSearchInput("")}
+            onClick={() => handleSearchInput('')}
             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
           >
-            ✖
+            ✕
           </button>
         )}
       </div>
 
       {/* Content */}
       <div className="container mx-auto px-4 py-6">
-        {savedStories.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="text-center">
+              <h2 className="text-6xl font-bold text-purple-600 mb-2 animate-bounce">📖</h2>
+              <p className="text-gray-500">Please wait while we fetch your magical tales</p>
+            </div>
+          </div>
+        ) : savedStories.length === 0 ? (
           <div className="text-center py-16">
-            <h2 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-4">No stories yet</h2>
-            <p className="text-gray-500 dark:text-gray-400 mb-6">Create your first story to see it here!</p>
+            <h2 className="text-2xl font-semibold text-gray-600 dark:text-gray-400 mb-4">No stories yet</h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">Create your first story to see it here!</p>
             <button
               onClick={async () => {
                 try {
-                  await fetch('http://localhost:8000/api/clear-sessions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                  });
+                  await apiRequest('/api/clear-sessions', { method: 'POST' });
                 } catch (error) {
-                  console.error("Failed to clear server sessions:", error);
+                  console.error('Failed to clear server sessions:', error);
                 }
-                navigate('/home');
+                navigate('/');
               }}
               className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold transition-all"
             >
@@ -254,26 +245,25 @@ const MyStoriesPage: React.FC = () => {
             {savedStories.map((story) => (
               <div
                 key={story.id}
-                className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-purple-100 dark:border-gray-700"
+                className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg transition duration-200 hover:scale-105 border border-purple-200 dark:border-gray-700"
               >
                 {/* Story Header */}
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="font-bold text-purple-700 dark:text-purple-300 text-base sm:text-lg line-clamp-2">
-                    {story.title}
-                  </h3>
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-bold text-purple-700 dark:text-purple-300 text-base sm:text-lg line-clamp-2">{story.title}</h3>
                   <button
                     onClick={() => deleteStory(story.id)}
-                    className="text-red-500 hover:text-red-700 text-sm sm:text-base transition-all"
+                    className="text-red-500 hover:text-red-700 ml-2 text-lg hover:scale-110 transition-all"
                   >
-                    ✖
+                    ✕
                   </button>
                 </div>
 
                 {/* Story Info */}
                 <div className="flex items-center gap-2 mb-4 text-sm text-gray-600 dark:text-gray-400">
-                  <span>📅 {formatDate(story.createdAt)}</span>
-                  <span>👶 Age: {story.age}</span>
-                  <span>{getLanguageFlag(story.language)}</span>
+                  <span className="text-lg">{getLanguageFlag(story.language)}</span>
+                  <span>@{story.id}</span>
+                  <span>•</span>
+                  <span>{formatDate(story.createdAt)}</span>
                 </div>
 
                 {/* Story Preview */}
@@ -283,6 +273,7 @@ const MyStoriesPage: React.FC = () => {
 
                 {/* Actions */}
                 <div className="flex gap-1 sm:gap-2">
+                  {/* Always show story button */}
                   <button
                     onClick={() => openTextViewer(story)}
                     className="flex-1 bg-green-500 hover:bg-green-600 text-white text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-3 rounded-lg transition-all font-medium"
@@ -306,7 +297,7 @@ const MyStoriesPage: React.FC = () => {
                       onClick={() => openStoryViewer(story)}
                       className="flex-1 bg-purple-500 hover:bg-purple-600 text-white text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-3 rounded-lg transition-all font-medium"
                     >
-                      🖼️ Read
+                      📚 Story Book
                     </button>
                   )}
                 </div>
@@ -314,26 +305,29 @@ const MyStoriesPage: React.FC = () => {
             ))}
           </div>
         )}
-      </div>
 
-      {/* Load More Button */}
-      {searchQuery && hasMore && (
-        <div className="text-center mt-6 sm:mt-8 px-4">
-          <button
-            onClick={loadMore}
-            className="bg-purple-500 hover:bg-purple-600 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-semibold transition-all hover:scale-105 text-sm sm:text-base w-full sm:w-auto max-w-xs"
-          >
-            Load More Stories
-          </button>
-        </div>
-      )}
+        {/* Load More Button */}
+        {searchQuery && hasMore && (
+          <div className="text-center mt-6 sm:mt-8 px-4">
+            <button
+              onClick={loadMore}
+              className="bg-purple-500 hover:bg-purple-600 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-semibold transition-all hover:scale-105 text-sm sm:text-base w-full sm:w-auto max-w-xs"
+            >
+              Load More Stories
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Audio Player */}
       {showAudioPlayer && audioStory && (
-        <KidAudioPlayer 
-        audioUrl={audioStory.audioUrl!}
-        storyText={audioStory.text}
-        onClose={closeAudioPlayer} />
+        <div className="fixed bottom-4 left-4 right-4 z-50">
+        <KidAudioPlayer
+          audioUrl={audioStory.audioUrl!}
+          storyText={audioStory.text}
+          onClose={closeAudioPlayer}
+        />
+        </div>
       )}
 
       {/* Text Story Viewer */}

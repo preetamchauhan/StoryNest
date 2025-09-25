@@ -2,16 +2,16 @@ import { Translations } from '../types/language';
 
 export const fr: Translations = {
   storyNest: 'Nid d\'Histoires',
-  surpriseMe: 'Surprends-moi !',
+  surpriseMe: 'Surprends-moi',
   guidedStory: 'Histoire Guidée',
   myOwnIdea: 'Ma Propre Idée',
-  listen: 'Écouter',
+  listen: '🎧 Écouter',
   save: 'Sauvegarder',
-  images: 'Images',
-  generateStory: 'Créer Mon Histoire !',
+  images: '📖 Livre d\'Histoires',
+  generateStory: 'Créer Mon Histoire!',
   backToMenu: 'Retour au Menu',
   clickToRead: 'Cliquez pour lire l\'histoire complète',
-  listeningToStory: 'Écoutant l\'Histoire',
+  listeningToStory: 'Écouter l\'Histoire...',
   creatingMagic: 'Création de votre histoire magique...',
   readyToHelp: 'Prêt à aider !',
   hopeYouEnjoyed: 'J\'espère que vous avez aimé votre histoire magique !',
@@ -28,5 +28,5 @@ export const fr: Translations = {
   readyForAdventure: 'Prêt pour une aventure magique ?',
   clickButtonBelow: 'Cliquez sur le bouton ci-dessous et laissez notre IA créer une histoire merveilleuse et unique pour vous !',
   chooseAdventure: 'Choisissez votre aventure étape par étape !',
-  storyBook: 'Livre d\'Histoires'
+  storyBook: '📖 Livre d\'Histoires'
 };

@@ -178,12 +178,11 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
         {page.imagePath && (
           <div className="mb-4 md:mb-6 flex-shrink-0">
             <div
-              className={`w-full h-96 md:h-129 lg:h-144 bg-gradient-to-br ${
-                currentTheme.colors.secondary
-              } rounded-lg flex items-center justify-center border-2 ${currentTheme.colors.text.replace(
-                "text-",
-                "border-"
-              )}`}
+              className={`w-full h-96 md:h-129 lg:h-144 bg-gradient-to-br ${currentTheme.colors.secondary
+                } rounded-lg flex items-center justify-center border-2 ${currentTheme.colors.text.replace(
+                  "text-",
+                  "border-"
+                )}`}
             >
               <img
                 src={
@@ -218,26 +217,25 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
           <p className="text-gray-700 leading-relaxed mb-4 text-xs md:text-sm lg:text-base">
             {page.content}
           </p>
-        </div>
 
-        {/* Dialogue */}
-        {page.dialogue && page.dialogue.length > 0 && (
-          <div className="space-y-2">
-            {page.dialogue.map((dialog: any, dialogIndex: number) => (
-              <p
-                key={dialogIndex}
-                className="bg-yellow-50 border-l-4 border-yellow-300 p-2 rounded-r-lg"
-              >
-                <span className="text-sm md:text-base">
-                  <span className="font-semibold text-purple-600">
-                    {dialog.speaker}:
-                  </span>
-                  <span className="ml-2 text-gray-700">{dialog.line}</span>
-                </span>
-              </p>
-            ))}
-          </div>
-        )}
+          {/* Dialogue */}
+          {page.dialogue && page.dialogue.length > 0 && (
+            <div className="space-y-2 mt-4">
+              <h4 className="text-sm font-semibold text-purple-600 mb-2">💬 Dialogue:</h4>
+              {page.dialogue.map((dialog: any, dialogIndex: number) => (
+                <div
+                  key={dialogIndex}
+                  className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-r-lg shadow-sm"
+                >
+                  <p className="text-sm md:text-base">
+                    <span className="font-bold text-purple-700">{dialog.speaker}:</span>
+                    <span className="ml-2 text-gray-800 italic">"{dialog.line}"</span>
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -259,9 +257,8 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
               onClick={() => setIsAutoPlay(!isAutoPlay)}
               variant="outline"
               size="sm"
-              className={`text-xs md:text-sm ${
-                isAutoPlay ? "bg-green-100 text-green-700" : ""
-              }`}
+              className={`text-xs md:text-sm ${isAutoPlay ? "bg-green-100 text-green-700" : ""
+                }`}
             >
               <span className="md:hidden">{isAutoPlay ? "⏸" : "▶️"}</span>
               <span className="hidden md:inline">
@@ -310,9 +307,8 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
                 <button
                   key={i}
                   onClick={() => setCurrentPage(i)}
-                  className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-colors ${
-                    currentPage === i ? "bg-purple-500" : "bg-gray-300"
-                  }`}
+                  className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-colors ${currentPage === i ? "bg-purple-500" : "bg-gray-300"
+                    }`}
                 />
               ))}
             </div>

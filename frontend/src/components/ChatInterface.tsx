@@ -226,6 +226,7 @@ if (event.type === 'story_complete') {
             storyText={storyData.story_text}
             size="small"
             originalPrompt={storyData.original_prompt || storyData.story_text}
+            autoSaveOnMount={true}
           />
         </div>
       </div>

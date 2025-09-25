@@ -5,9 +5,9 @@ export const es: Translations = {
   surpriseMe: '¡Sorpréndeme!',
   guidedStory: 'Historia Guiada',
   myOwnIdea: 'Mi Propia Idea',
-  listen: 'Escuchar',
+  listen: '🎧 Escuchar',
   save: 'Guardar',
-  images: 'Imágenes',
+  images: '📖 Libro de Cuentos',
   generateStory: '¡Generar Mi Historia!',
   backToMenu: 'Volver al Menú',
   clickToRead: 'Haz clic para leer la historia completa',
@@ -24,9 +24,9 @@ export const es: Translations = {
   values: 'Valores de la Historia (selecciona varios)',
   tellUsIdea: 'Cuéntanos tu Idea de Historia',
   language: 'Idioma',
-  letAiCreate: '¡Deja que la IA cree una historia mágica para ti!',
+  letAiCreate: 'Deja que la IA cree una historia mágica para ti!',
   readyForAdventure: '¿Listo para una aventura mágica?',
   clickButtonBelow: 'Haz clic en el botón de abajo y deja que nuestra IA cree una historia maravillosa y única para ti!',
   chooseAdventure: '¡Elige tu aventura paso a paso!',
-  storyBook: 'Libro de Cuentos'
+  storyBook: '📖 Libro de Cuentos'
 };

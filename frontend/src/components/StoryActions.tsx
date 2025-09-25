@@ -10,9 +10,10 @@ interface StoryActionsProps {
   storyText: string;
   size?: 'small' | 'large';
   originalPrompt?: string;
+  autoSaveOnMount?: boolean;
 }
 
-const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size = 'large', originalPrompt }) => {
+const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size = 'large', originalPrompt, autoSaveOnMount = false }) => {
   const { t, currentLanguage } = useLanguage();
   const { age } = useApp();
 
@@ -25,6 +26,16 @@ const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size
   const [storyData, setStoryData] = useState<{ framesData: any, imagePaths: string[] } | null>(null);
   const [showLoadingProgress, setShowLoadingProgress] = useState(false);
   const [loadingTask, setLoadingTask] = useState<'story' | 'images' | 'audio'>('story');
+
+  React.useEffect(() => {
+  if (!autoSaveOnMount) return;
+
+  const handler = setTimeout(() => {
+    autoSaveStory();
+  }, 1000); // wait 1s before saving
+
+  return () => clearTimeout(handler); // cleanup
+}, [autoSaveOnMount, storyTitle, storyText, currentLanguage.code, age]);
 
   const handleListen = async () => {
     if (showAudioPlayer) {
@@ -174,7 +185,7 @@ const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size
           className={`${buttonSize} bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 disabled:from-gray-100 disabled:to-gray-200 text-blue-700 hover:text-blue-800 disabled:text-gray-400 rounded-xl font-semibold shadow-md transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 flex items-center gap-2 border border-blue-200 hover:border-blue-300`}
         >
           <span className={`${iconSize} ${isGeneratingAudio ? 'animate-spin' : ''}`}>
-            {isGeneratingAudio ? '🎧' : showAudioPlayer ? '🙈' : '🎙️'}
+            {isGeneratingAudio ? '🎧' : showAudioPlayer ? '🙈' : ''}
           </span>
           <span>{isGeneratingAudio ? 'Generating...' : showAudioPlayer ? 'Hide Player' : t('listen')}</span>
         </button>
@@ -185,7 +196,7 @@ const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size
           className={`${buttonSize} bg-gradient-to-r from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200 disabled:from-gray-100 disabled:to-gray-200 text-purple-700 hover:text-purple-800 disabled:text-gray-400 rounded-xl font-semibold shadow-md transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 flex items-center gap-2 border border-purple-200 hover:border-purple-300`}
         >
           <span className={`${iconSize} ${isGeneratingImages ? 'animate-spin' : ''}`}>
-            {isGeneratingImages ? '✨' : '🖼️'}
+            {isGeneratingImages ? '✨' : ''}
           </span>
           <span>{isGeneratingImages ? 'Creating...' : t('images')}</span>
         </button>

@@ -5,13 +5,13 @@ export const en: Translations = {
   surpriseMe: 'Surprise Me!',
   guidedStory: 'Guided Story',
   myOwnIdea: 'My Own Idea',
-  listen: 'Listen',
+  listen: '🎧 Listen',
   save: 'Save',
-  images: 'Images',
+  images: '📖 Story Book',
   generateStory: 'Generate My Story!',
   backToMenu: 'Back to Menu',
   clickToRead: 'Click to read full story',
-  listeningToStory: 'Listening to Story',
+  listeningToStory: 'Listening to Story...',
   creatingMagic: 'Creating your magical story...',
   readyToHelp: 'Ready to help!',
   hopeYouEnjoyed: 'Hope you enjoyed your magical story!',
@@ -28,5 +28,5 @@ export const en: Translations = {
   readyForAdventure: 'Ready for a magical adventure?',
   clickButtonBelow: 'Click the button below and let our AI create a wonderful, unique story just for you!',
   chooseAdventure: 'Choose your adventure step by step!',
-  storyBook: 'Story Book'
+  storyBook: '📖 Story Book'
 };
