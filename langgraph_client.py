@@ -3,7 +3,7 @@ LangGraph workflow for child safety moderation.
 """
 
 import logging
-from typing import import TypedDict
+from typing import TypedDict
 from pydantic import BaseModel, Field
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
