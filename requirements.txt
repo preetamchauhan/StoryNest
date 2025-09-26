@@ -1,0 +1,49 @@
+# Core FastAPI and Web Framework
+fastapi>=0.104.0
+uvicorn>=0.24.0
+python-multipart>=0.0.6
+
+# Pydantic for data validation
+pydantic>=2.0.0
+
+# OpenAI and LangChain
+openai>=1.0.0
+langchain-openai>=0.1.0
+langchain-core>=0.2.0
+langgraph>=0.1.0
+langgraph-sdk>=0.1.0
+
+# Database and Vector Storage
+lancedb>=0.8.0
+pandas>=2.0.0
+
+# Authentication and Security
+PyJWT>=2.8.0
+cryptography>=41.0.0
+python-jose[cryptography]>=3.3.0
+
+# Audio Generation (Text-to-Speech)
+pyttsx3>=2.90
+gTTS>=2.4.0
+
+# Image Processing and Generation
+Pillow>=10.0.0
+requests>=2.31.0
+
+# Environment and Configuration
+python-dotenv>=1.0.0
+
+# Async and Threading Support
+asyncio-mqtt>=0.16.0
+
+# Utilities
+
+
+# Development and Logging
+logging>=0.4.9.6
+
+# Optional: Game/Audio Support (if needed)
+#pygame>=2.5.0
+
+# Optional: Additional HTTP client
+#aiohttp>=3.9.0
