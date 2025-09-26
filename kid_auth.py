@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
-from typing import import List
+from typing import List
 import os
 import pandas as pd
 from cryptography.fernet import Fernet

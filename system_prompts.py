@@ -543,6 +543,7 @@ Exact JSON shape to return (replace all example strings with real content):
 # DO NOT expose reasoning; only return the final safe JSON.
 # ================================================================
 
+
 def get_story_image_retry_template():
     """Get the retry template for story image generation."""
     return """
@@ -583,4 +584,3 @@ Generate 4-6 frames with complete bible section.
 def get_story_image_retry_system_prompt():
     """Get the retry system prompt for story image generation."""
     return "You are a children's story generator. Return complete JSON with bible and frames."
-

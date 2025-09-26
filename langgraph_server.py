@@ -47,44 +47,23 @@ class LangGraphServer:
                 sync_messages = message_bus.get_sync_messages()
                 for msg in sync_messages:
                     if msg["type"] == "log":
-                        yield {
-                            "type": "log",
-                            "data": {"message": msg["message"]}
-                        }
+                        yield {"type": "log", "data": {"message": msg["message"]}}
                     elif msg["type"] == "error":
-                        yield {
-                            "type": "error",
-                            "data": msg["data"]
-                        }
+                        yield {"type": "error", "data": msg["data"]}
                     elif msg["type"] == "story_complete":
-                        yield {
-                            "type": "story_complete",
-                            "data": msg["data"]
-                        }
+                        yield {"type": "story_complete", "data": msg["data"]}
                     elif msg["type"] == "story_chunk":
-                        yield {
-                            "type": "story_chunk",
-                            "data": msg["data"]
-                        }
+                        yield {"type": "story_chunk", "data": msg["data"]}
 
             # Get any remaining messages after workflow completes
             sync_messages = message_bus.get_sync_messages()
             for msg in sync_messages:
                 if msg["type"] == "log":
-                    yield {
-                        "type": "log",
-                        "data": {"message": msg["message"]}
-                    }
+                    yield {"type": "log", "data": {"message": msg["message"]}}
                 elif msg["type"] == "error":
-                    yield {
-                        "type": "error",
-                        "data": msg["data"]
-                    }
+                    yield {"type": "error", "data": msg["data"]}
                 elif msg["type"] == "story_complete":
-                    yield {
-                        "type": "story_complete",
-                        "data": msg["data"]
-                    }
+                    yield {"type": "story_complete", "data": msg["data"]}
 
             # Get final result
             try:
@@ -92,39 +71,31 @@ class LangGraphServer:
                 if status == "success":
                     # Check if validation failed - don't send final success message
                     validator_result = result.get("validator_result")
-                    if validator_result and hasattr(validator_result, 'verdict') and validator_result.verdict != "accept":
+                    if (
+                        validator_result
+                        and hasattr(validator_result, "verdict")
+                        and validator_result.verdict != "accept"
+                    ):
                         # Validation failed, don't send final success message
                         pass
                     else:
                         # Convert Pydantic models to dict for JSON serialization
                         serializable_result = {}
                         for key, value in result.items():
-                            if hasattr(value, 'dict'):
+                            if hasattr(value, "dict"):
                                 serializable_result[key] = value.dict()
                             else:
                                 serializable_result[key] = value
 
-                        yield {
-                            "type": "final",
-                            "data": serializable_result
-                        }
+                        yield {"type": "final", "data": serializable_result}
                 else:
-                    yield {
-                        "type": "error",
-                        "data": result
-                    }
+                    yield {"type": "error", "data": result}
 
             except queue.Empty:
-                yield {
-                    "type": "error",
-                    "data": "Workflow timeout"
-                }
+                yield {"type": "error", "data": "Workflow timeout"}
 
         except Exception as e:
-            yield {
-                "type": "error",
-                "data": str(e)
-            }
+            yield {"type": "error", "data": str(e)}
 
     async def invoke_workflow(self, initial_state: dict):
         """Invoke workflow and return final result with captured logs."""
@@ -133,26 +104,25 @@ class LangGraphServer:
         try:
             with redirect_stdout(captured_output):
                 final_state = await asyncio.to_thread(
-                    self.client.workflow.invoke,
-                    initial_state
+                    self.client.workflow.invoke, initial_state
                 )
 
             # Get captured logs
-            logs = [line.strip() for line in captured_output.getvalue().split('\n') if line.strip()]
+            logs = [
+                line.strip()
+                for line in captured_output.getvalue().split("\n")
+                if line.strip()
+            ]
 
-            return {
-                "type": "final",
-                "data": final_state,
-                "logs": logs
-            }
+            return {"type": "final", "data": final_state, "logs": logs}
 
         except Exception as e:
-            logs = [line.strip() for line in captured_output.getvalue().split('\n') if line.strip()]
-            return {
-                "type": "error",
-                "data": {"error": str(e)},
-                "logs": logs
-            }
+            logs = [
+                line.strip()
+                for line in captured_output.getvalue().split("\n")
+                if line.strip()
+            ]
+            return {"type": "error", "data": {"error": str(e)}, "logs": logs}
 
 
 # Global server instance

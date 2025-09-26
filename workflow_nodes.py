@@ -63,7 +63,9 @@ class SurpriseModeNode:
 
         # Debug log
         language_name = get_language_display_name(language)
-        message_bus.publish_sync("log", f"🌍 Language selected: {language_name} (Age: {age})")
+        message_bus.publish_sync(
+            "log", f"🌍 Language selected: {language_name} (Age: {age})"
+        )
 
         # Determine age group for prompt
         if age <= 7:
@@ -86,7 +88,9 @@ class SurpriseModeNode:
         prompt = response.content.strip()
 
         # Clean up reasoning (if model outputs meta content)
-        prompt = re.sub(r"<reasoning>.*?</reasoning>", "", prompt, flags=re.DOTALL).strip()
+        prompt = re.sub(
+            r"<reasoning>.*?</reasoning>", "", prompt, flags=re.DOTALL
+        ).strip()
         state["prompt"] = prompt
 
         message_bus.publish_sync("log", f"💡 Story idea: {prompt}")
@@ -118,7 +122,10 @@ class GuidedModeNode:
 
         # Debug log
         language_name = get_language_display_name(language)
-        message_bus.publish_sync("log", f"🌍 Language selected: {language_name} (Age: {age}, Group: {age_group})")
+        message_bus.publish_sync(
+            "log",
+            f"🌍 Language selected: {language_name} (Age: {age}, Group: {age_group})",
+        )
 
         # Generate guided story prompt
         guided_prompt = get_guided_story_prompt()
@@ -131,7 +138,9 @@ class GuidedModeNode:
         prompt = response.content.strip()
 
         # Clean up reasoning
-        prompt = re.sub(r"<reasoning>.*?</reasoning>", "", prompt, flags=re.DOTALL).strip()
+        prompt = re.sub(
+            r"<reasoning>.*?</reasoning>", "", prompt, flags=re.DOTALL
+        ).strip()
         state["prompt"] = prompt
         state["age"] = age
         state["language"] = language
@@ -167,7 +176,10 @@ class FreeFormModeNode:
 
         # Debug log
         language_name = get_language_display_name(language)
-        message_bus.publish_sync("log", f"🌍 Language selected: {language_name} (Age: {age}, Group: {age_group})")
+        message_bus.publish_sync(
+            "log",
+            f"🌍 Language selected: {language_name} (Age: {age}, Group: {age_group})",
+        )
         message_bus.publish_sync("log", f"💡 Your story idea: {prompt}")
 
         return state
@@ -198,15 +210,21 @@ class ValidatePromptNode:
         message_bus.publish_sync("log", "🔍 Validating your story idea...")
 
         messages = [
-            SystemMessage(content=KID_STORY_PROMPT_GUARD + "\n\n" + parser.get_format_instructions()),
-            HumanMessage(content=f"Validate this prompt: {state['prompt']}")
+            SystemMessage(
+                content=KID_STORY_PROMPT_GUARD
+                + "\n\n"
+                + parser.get_format_instructions()
+            ),
+            HumanMessage(content=f"Validate this prompt: {state['prompt']}"),
         ]
 
         try:
             response = self.llm.invoke(messages)
 
             # Clean up reasoning text that OpenAI model might include
-            clean_content = re.sub(r"<reasoning>.*?</reasoning>", "", response.content, flags=re.DOTALL)
+            clean_content = re.sub(
+                r"<reasoning>.*?</reasoning>", "", response.content, flags=re.DOTALL
+            )
             clean_content = clean_content.strip()
 
             parsed_response = parser.parse(clean_content)
@@ -214,6 +232,7 @@ class ValidatePromptNode:
 
             # Save validation result
             from langgraph_client import ValidatorResult
+
             state["validator_result"] = ValidatorResult(
                 verdict=parsed_response.verdict,
                 reason=parsed_response.reason,
@@ -232,7 +251,9 @@ class ValidatePromptNode:
                     f"⭐ Quality Score: {parsed_response.quality_score}/100\n\n"
                 )
                 if parsed_response.improved_prompt:
-                    validation_details += f"✨ Try this instead:\n\n{parsed_response.improved_prompt} ✨"
+                    validation_details += (
+                        f"✨ Try this instead:\n\n{parsed_response.improved_prompt} ✨"
+                    )
 
                 message_bus.publish_sync("error", validation_details)
 
@@ -248,7 +269,7 @@ class ValidatePromptNode:
                 reason=f"Failed to parse validator response: {str(e)}",
                 language="unknown",
                 quality_score=0,
-                improved_prompt=""
+                improved_prompt="",
             )
 
             validation_details = (
@@ -273,17 +294,25 @@ class DetectLanguageNode:
         self.llm = llm
 
     def __call__(self, state):
-        template = ChatPromptTemplate.from_messages([
-            ("system", get_language_detection_prompt()),
-            ("human", "Detect the language: {prompt}")
-        ])
+        template = ChatPromptTemplate.from_messages(
+            [
+                ("system", get_language_detection_prompt()),
+                ("human", "Detect the language: {prompt}"),
+            ]
+        )
 
         chain = template | self.llm
         language_response = chain.invoke({"prompt": state["prompt"]})
 
         # Clean up any reasoning text that OpenAI model might include
         import re
-        clean_content = re.sub(r"<reasoning>.*?</reasoning>", "", language_response.content, flags=re.DOTALL)
+
+        clean_content = re.sub(
+            r"<reasoning>.*?</reasoning>",
+            "",
+            language_response.content,
+            flags=re.DOTALL,
+        )
         state["language"] = clean_content.strip()
 
         return state
@@ -309,10 +338,14 @@ class ModeratePromptNode:
 
         parser = PydanticOutputParser(pydantic_object=ModerationResponse)
 
-        moderation_prompt = get_moderation_prompt(state["language"]) + "\n\n" + parser.get_format_instructions()
+        moderation_prompt = (
+            get_moderation_prompt(state["language"])
+            + "\n\n"
+            + parser.get_format_instructions()
+        )
         messages = [
             SystemMessage(content=moderation_prompt),
-            HumanMessage(content=f"Analyze this prompt: {state['prompt']}")
+            HumanMessage(content=f"Analyze this prompt: {state['prompt']}"),
         ]
 
         message_bus.publish_sync("log", "🛡️ Analyzing prompt for safety...")
@@ -323,12 +356,13 @@ class ModeratePromptNode:
 
             # Convert to expected format
             from langgraph_client import ModerationResult
+
             state["result"] = ModerationResult(
                 decision=parsed_response.decision,
                 reasoning=f"Theme: {parsed_response.reasoning.get('theme', '')}, "
-                          f"Values: {parsed_response.reasoning.get('values', '')}, "
-                          f"Age: {parsed_response.reasoning.get('age_appropriateness', '')}",
-                suggestions=parsed_response.safe_alternative
+                f"Values: {parsed_response.reasoning.get('values', '')}, "
+                f"Age: {parsed_response.reasoning.get('age_appropriateness', '')}",
+                suggestions=parsed_response.safe_alternative,
             )
 
             message_bus.publish_sync("log", f"✅ Decision: {parsed_response.decision}")
@@ -350,7 +384,8 @@ class ParseResponseNode:
         try:
             # Clean response – extract JSON if mixed with other text
             import re, json
-            json_match = re.search(r'(\{.*\})', response, re.DOTALL)
+
+            json_match = re.search(r"(\{.*\})", response, re.DOTALL)
             if json_match:
                 json_str = json_match.group(1)
             else:
@@ -361,9 +396,11 @@ class ParseResponseNode:
 
             decision = json_data.get("decision", "negative")
             reasoning_obj = json_data.get("reasoning", {})
-            reasoning = f"Theme: {reasoning_obj.get('theme', '')}, " \
-                        f"Values: {reasoning_obj.get('values', '')}, " \
-                        f"Age: {reasoning_obj.get('age_appropriateness', '')}"
+            reasoning = (
+                f"Theme: {reasoning_obj.get('theme', '')}, "
+                f"Values: {reasoning_obj.get('values', '')}, "
+                f"Age: {reasoning_obj.get('age_appropriateness', '')}"
+            )
             suggestions = json_data.get("safe_alternative", "")
 
         except (json.JSONDecodeError, KeyError):
@@ -372,29 +409,38 @@ class ParseResponseNode:
             if "positive" in response.lower():
                 decision = "positive"
 
-            reasoning_match = re.search(r"(positive|negative)[^:]*:\s*(.+)", response, re.IGNORECASE | re.DOTALL)
+            reasoning_match = re.search(
+                r"(positive|negative)[^:]*:\s*(.+)", response, re.IGNORECASE | re.DOTALL
+            )
             reasoning = reasoning_match.group(2).strip() if reasoning_match else ""
 
             suggestions = ""
             if "consider" in response.lower() or "suggest" in response.lower():
-                suggest_match = re.search(r"(consider|suggest)[^:]*:\s*(.+)", response, re.IGNORECASE | re.DOTALL)
+                suggest_match = re.search(
+                    r"(consider|suggest)[^:]*:\s*(.+)",
+                    response,
+                    re.IGNORECASE | re.DOTALL,
+                )
                 suggestions = suggest_match.group(2) if suggest_match else ""
 
         # Save into state
         from langgraph_client import ModerationResult
+
         state["result"] = ModerationResult(
-            decision=decision,
-            reasoning=reasoning,
-            suggestions=suggestions
+            decision=decision, reasoning=reasoning, suggestions=suggestions
         )
 
         from message_bus import message_bus
 
         # Parse reasoning into separate lines
         reasoning_parts = reasoning.split(".")
-        reasoning_formatted = "\n".join([f"• {part.strip()}" for part in reasoning_parts if part.strip()])
+        reasoning_formatted = "\n".join(
+            [f"• {part.strip()}" for part in reasoning_parts if part.strip()]
+        )
 
-        combined_message = f"✅ Decision: {decision}\n📖 Reasoning:\n{reasoning_formatted}"
+        combined_message = (
+            f"✅ Decision: {decision}\n📖 Reasoning:\n{reasoning_formatted}"
+        )
         message_bus.publish_sync("log", combined_message)
 
         if suggestions:
@@ -419,13 +465,17 @@ class ImproveShortNode:
         improve_prompt = get_improve_short_prompt(state["language"], state["age"])
         messages = [
             SystemMessage(content=improve_prompt),
-            HumanMessage(content=f"Expand this short prompt for age {state['age']}: {state['prompt']}")
+            HumanMessage(
+                content=f"Expand this short prompt for age {state['age']}: {state['prompt']}"
+            ),
         ]
 
         response = self.llm.invoke(messages)
 
         # Clean up reasoning text if model includes it
-        improved_prompt = re.sub(r"<reasoning>.*?</reasoning>", "", response.content, flags=re.DOTALL)
+        improved_prompt = re.sub(
+            r"<reasoning>.*?</reasoning>", "", response.content, flags=re.DOTALL
+        )
         improved_prompt = improved_prompt.strip()
 
         print(f"Prompt is too short, improving context...")
@@ -449,13 +499,17 @@ class ImproveLongNode:
         improve_prompt = get_improve_long_prompt(state["language"], state["age"])
         messages = [
             SystemMessage(content=improve_prompt),
-            HumanMessage(content=f"Enhance this prompt for age {state['age']}: {state['prompt']}")
+            HumanMessage(
+                content=f"Enhance this prompt for age {state['age']}: {state['prompt']}"
+            ),
         ]
 
         response = self.llm.invoke(messages)
 
         # Clean up reasoning text
-        improved_prompt = re.sub(r"<reasoning>.*?</reasoning>", "", response.content, flags=re.DOTALL)
+        improved_prompt = re.sub(
+            r"<reasoning>.*?</reasoning>", "", response.content, flags=re.DOTALL
+        )
         improved_prompt = improved_prompt.strip()
 
         print(f"ImproveLongNode - Enhanced prompt: {improved_prompt}")
@@ -484,14 +538,15 @@ class KidStoryGeneratorNode:
             state["age_group"] = age_group
 
         import time
+
         timestamp = int(time.time())
 
         # Debug: Log language being used
         from message_bus import message_bus
+
         language_name = get_language_display_name(state["language"])
         message_bus.publish_sync(
-            "log",
-            f"📚 Generating story in: {language_name} for age group {age_group}"
+            "log", f"📚 Generating story in: {language_name} for age group {age_group}"
         )
 
         from system_prompts import get_kid_story_generator_prompt
@@ -510,7 +565,7 @@ class KidStoryGeneratorNode:
                     f"Create a completely different story each time. "
                     f"Avoid repeating previous stories."
                 )
-            )
+            ),
         ]
 
         message_bus.publish_sync("log", "✨ Creating your magical story...")
@@ -545,7 +600,7 @@ class KidStoryGeneratorNode:
                 words = response.split()
                 chunk_size = 5  # send 5 words at a time
                 for i in range(0, len(words), chunk_size):
-                    chunk_text = " ".join(words[i:i+chunk_size]) + " "
+                    chunk_text = " ".join(words[i : i + chunk_size]) + " "
                     message_bus.publish_sync("story_chunk", chunk_text)
                     time.sleep(0.1)
 
@@ -555,7 +610,7 @@ class KidStoryGeneratorNode:
             words = response.split()
             chunk_size = 5
             for i in range(0, len(words), chunk_size):
-                chunk_text = " ".join(words[i:i+chunk_size]) + " "
+                chunk_text = " ".join(words[i : i + chunk_size]) + " "
                 message_bus.publish_sync("story_chunk", chunk_text)
                 time.sleep(0.1)
 
@@ -568,7 +623,16 @@ class KidStoryGeneratorNode:
             for sentence in reversed(sentences):
                 sentence = sentence.strip()
                 if len(sentence) >= 2 and not any(
-                    word in sentence.lower() for word in ["reasoning", "word count", "craft", "produce", "generate", "schema", "json"]
+                    word in sentence.lower()
+                    for word in [
+                        "reasoning",
+                        "word count",
+                        "craft",
+                        "produce",
+                        "generate",
+                        "schema",
+                        "json",
+                    ]
                 ):
                     response = sentence + "."
                     break
@@ -583,10 +647,9 @@ class KidStoryGeneratorNode:
         state["story"] = {"title": title, "story_text": story_text}
 
         message_bus.publish_sync("log", f"📖 Story created: {title}")
-        message_bus.publish_sync("story_complete", {
-            "title": title,
-            "story_text": story_text
-        })
+        message_bus.publish_sync(
+            "story_complete", {"title": title, "story_text": story_text}
+        )
 
         return state
 
@@ -607,10 +670,10 @@ class GenerateStoryImageNode:
 
         # Get story prompt from system_prompts
         from system_prompts import get_story_image_generation_prompt
-        story_prompt = get_story_image_generation_prompt(age_band, state["language"]).format(
-            language=state["language"],
-            age_band=age_band
-        )
+
+        story_prompt = get_story_image_generation_prompt(
+            age_band, state["language"]
+        ).format(language=state["language"], age_band=age_band)
 
         # Debug: print prompt being used
         print("\n=== GenerateStoryImageNode Debug ===")
@@ -621,7 +684,7 @@ class GenerateStoryImageNode:
 
         messages = [
             SystemMessage(content=story_prompt),
-            HumanMessage(content=f"Story seed: {state['prompt']}")
+            HumanMessage(content=f"Story seed: {state['prompt']}"),
         ]
         # Retry loop for story generation
         for attempt in range(max_retries):
@@ -630,27 +693,34 @@ class GenerateStoryImageNode:
                 if attempt > 0:
                     from system_prompts import (
                         get_story_image_retry_template,
-                        get_story_image_retry_system_prompt
+                        get_story_image_retry_system_prompt,
                     )
+
                     retry_prompt = get_story_image_retry_template().format(
                         age_band=age_band,
                         language=state["language"],
-                        prompt=state["prompt"]
+                        prompt=state["prompt"],
                     )
                     messages = [
                         SystemMessage(content=get_story_image_retry_system_prompt()),
-                        HumanMessage(content=retry_prompt)
+                        HumanMessage(content=retry_prompt),
                     ]
 
                 from message_bus import message_bus
-                message_bus.publish_sync("log", f"🔄 Generating story (attempt {attempt + 1})...")
+
+                message_bus.publish_sync(
+                    "log", f"🔄 Generating story (attempt {attempt + 1})..."
+                )
 
                 response = self.llm.invoke(messages)
                 content = response.content.strip()
 
                 # Clean up reasoning tags
                 import re
-                content = re.sub(r"<reasoning>.*?</reasoning>", "", content, flags=re.DOTALL)
+
+                content = re.sub(
+                    r"<reasoning>.*?</reasoning>", "", content, flags=re.DOTALL
+                )
                 content = content.strip()
 
                 # Debug: print response info
@@ -662,9 +732,14 @@ class GenerateStoryImageNode:
 
                 # Save full response for inspection
                 import os
-                debug_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "debug_outputs")
+
+                debug_dir = os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)), "debug_outputs"
+                )
                 os.makedirs(debug_dir, exist_ok=True)
-                debug_file = os.path.join(debug_dir, f"llm_response_attempt_{attempt + 1}.txt")
+                debug_file = os.path.join(
+                    debug_dir, f"llm_response_attempt_{attempt + 1}.txt"
+                )
                 with open(debug_file, "w", encoding="utf-8") as f:
                     f.write(f"Attempt {attempt + 1}\n")
                     f.write(f"Content length: {len(content)}\n\n")
@@ -673,7 +748,9 @@ class GenerateStoryImageNode:
                 print(f"✅ Full response saved to: {debug_file}")
 
                 # Strip Markdown wrappers like ```json ... ```
-                json_match = re.search(r"```(?:json)?\s*(\{.*\})\s*```", content, re.DOTALL)
+                json_match = re.search(
+                    r"```(?:json)?\s*(\{.*\})\s*```", content, re.DOTALL
+                )
                 if json_match:
                     content = json_match.group(1)
 
@@ -689,7 +766,11 @@ class GenerateStoryImageNode:
                     try:
                         fixed_content = content
                         # Fix missing commas between objects in scenes_by_frame
-                        fixed_content = re.sub(r'"\},\s*\{"frame_index"', '"}, {"frame_index"', fixed_content)
+                        fixed_content = re.sub(
+                            r'"\},\s*\{"frame_index"',
+                            '"}, {"frame_index"',
+                            fixed_content,
+                        )
                         # Remove trailing commas and fix quotes
                         fixed_content = re.sub(r",\s*}", "}", fixed_content)
                         fixed_content = re.sub(r",\s*]", "]", fixed_content)
@@ -723,7 +804,9 @@ class GenerateStoryImageNode:
                         print("🔄 Converted single frame to proper format")
                         break
                     else:
-                        raise ValueError(f"⚠️ Missing required keys: {list(story_json.keys())}")
+                        raise ValueError(
+                            f"⚠️ Missing required keys: {list(story_json.keys())}"
+                        )
                 else:
                     raise ValueError("❌ Failed to parse JSON from response")
 
@@ -731,6 +814,7 @@ class GenerateStoryImageNode:
                 if attempt < max_retries - 1:
                     # Exponential backoff before retry
                     import time
+
                     time.sleep(retry_delay)
                     retry_delay *= 2
                 else:
@@ -740,20 +824,33 @@ class GenerateStoryImageNode:
                             {
                                 "title": "Adventure Begins",
                                 "objective": "Start the story adventure",
-                                "beats": ["Hero appears", "Problem is discovered", "Journey starts"],
-                                "background_details": ["Magical setting", "Colorful world"],
-                                "dialogue_hooks": ["Hero: Let's go!", "Friend: I'm ready!", "Hero: Adventure awaits!"]
+                                "beats": [
+                                    "Hero appears",
+                                    "Problem is discovered",
+                                    "Journey starts",
+                                ],
+                                "background_details": [
+                                    "Magical setting",
+                                    "Colorful world",
+                                ],
+                                "dialogue_hooks": [
+                                    "Hero: Let's go!",
+                                    "Friend: I'm ready!",
+                                    "Hero: Adventure awaits!",
+                                ],
                             }
                         ]
                     }
                     break
-                
+
         from message_bus import message_bus
+
         message_bus.publish_sync("log", "🎉 Story generated successfully!")
         story_data = state["story_json"]
 
         # Create output directory for JSON files and clear existing content
         import os, shutil
+
         base_dir = os.path.dirname(os.path.abspath(__file__))
         output_dir = os.path.join(base_dir, "story_outputs")
 
@@ -785,6 +882,7 @@ class GenerateStoryImageNode:
 
         # Generate images for frames
         from image_generator import ImageGenerator, create_session_dictionary
+
         message_bus.publish_sync("log", "🎨 Generating images for story frames...")
 
         bible = story_data.get("bible", {})
@@ -812,7 +910,9 @@ class GenerateStoryImageNode:
         state["session_frames"] = session_dict
         state["image_paths"] = image_paths
 
-        message_bus.publish_sync("log", f"🖼️ Generated {len(image_paths)} images for story frames")
+        message_bus.publish_sync(
+            "log", f"🖼️ Generated {len(image_paths)} images for story frames"
+        )
         # Generate individual frame files with bible, frame, scene data, and image path
         for i, frame in enumerate(frames):
             # Find corresponding scene for this frame
@@ -839,7 +939,7 @@ class GenerateStoryImageNode:
                 "bible": bible,
                 "frame": frame,
                 "scenes_by_frame": clean_scene,
-                "image_path": image_paths[i] if i < len(image_paths) else ""
+                "image_path": image_paths[i] if i < len(image_paths) else "",
             }
 
             frame_path = os.path.join(output_dir, f"frame_{i+1}.json")
@@ -848,8 +948,7 @@ class GenerateStoryImageNode:
 
         message_bus.publish_sync(
             "log",
-            f"📁 Created {len(frames)} story frames with images and saved individual frame files in story_outputs folder"
+            f"📁 Created {len(frames)} story frames with images and saved individual frame files in story_outputs folder",
         )
 
         return state
-

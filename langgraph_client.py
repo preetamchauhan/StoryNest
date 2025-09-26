@@ -9,9 +9,18 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
 from config import OPENAI_API_KEY, OPENAI_MODEL, OPENAI_TEMPERATURE, OPENAI_MAX_TOKENS
 from workflow_nodes import (
-    ChoiceMenuNode, SurpriseModeNode, GuidedModeNode, FreeformModeNode,
-    ValidatePromptNode, DetectLanguageNode, ModeratePromptNode, ParseResponseNode,
-    ImproveShortNode, ImproveLongNode, KidStoryGeneratorNode, GenerateStoryImageNode
+    ChoiceMenuNode,
+    SurpriseModeNode,
+    GuidedModeNode,
+    FreeformModeNode,
+    ValidatePromptNode,
+    DetectLanguageNode,
+    ModeratePromptNode,
+    ParseResponseNode,
+    ImproveShortNode,
+    ImproveLongNode,
+    KidStoryGeneratorNode,
+    GenerateStoryImageNode,
 )
 
 logger = logging.getLogger(__name__)
@@ -19,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 class ModerationResult(BaseModel):
     """Structured moderation result."""
+
     decision: str = Field(description="Either 'positive' or 'negative'")
     reasons: str = Field(description="Detailed reasoning for the decision")
     quality_score: int = Field(description="Quality score (0-100)")
@@ -27,6 +37,7 @@ class ModerationResult(BaseModel):
 
 class ValidatorResult(BaseModel):
     """Structured validation result."""
+
     verdict: str = Field(description="Accept, revise, or reject")
     language: str = Field(description="Language for verdict")
     quality_score: int = Field(description="Quality score (0-100)")
@@ -35,6 +46,7 @@ class ValidatorResult(BaseModel):
 
 class ModerationState(TypedDict):
     """State for moderation workflow."""
+
     mode: str  # 'surprise', 'guided', 'freeform'
     prompt: str
     age: int
@@ -60,7 +72,7 @@ class LangGraphModerationClient:
             api_key=OPENAI_API_KEY,
             model=OPENAI_MODEL,
             temperature=OPENAI_TEMPERATURE,
-            max_tokens=OPENAI_MAX_TOKENS
+            max_tokens=OPENAI_MAX_TOKENS,
         )
 
         # Initialize workflow nodes
@@ -78,6 +90,8 @@ class LangGraphModerationClient:
         self.generate_story_image = GenerateStoryImageNode(self.llm)
 
         self.workflow = self._create_workflow()
+
+
 def _create_workflow(self) -> StateGraph:
     """Create the moderation workflow."""
     workflow = StateGraph(ModerationState)
@@ -122,26 +136,20 @@ def _create_workflow(self) -> StateGraph:
         {
             "improve_short": "improve_short",
             "improve_long": "improve_long",
-        }
+        },
     )
 
     # Improvement to decision check
     workflow.add_conditional_edges(
         "improve_short",
         self._check_decision,
-        {
-            "generate": "generate_story",
-            "retry": "choice_menu"
-        }
+        {"generate": "generate_story", "retry": "choice_menu"},
     )
 
     workflow.add_conditional_edges(
         "improve_long",
         self._check_decision,
-        {
-            "generate": "generate_story",
-            "retry": "choice_menu"
-        }
+        {"generate": "generate_story", "retry": "choice_menu"},
     )
 
     # End workflow
@@ -154,79 +162,87 @@ def _create_workflow(self) -> StateGraph:
         {
             "continue": "detect_language",
             "stop": END,
-        }
+        },
     )
     workflow.add_edge("detect_language", "moderate")
 
     return workflow.compile()
 
+
 def _check_mode_choice(self, state: ModerationState) -> str:
-        """Route to appropriate mode based on user choice."""
-        return state["mode"]
+    """Route to appropriate mode based on user choice."""
+    return state["mode"]
+
 
 def _check_validator_verdict(self, state: ModerationState) -> str:
-        """Check validator verdict and determine next step."""
-        verdict = state["validator_result"].verdict
+    """Check validator verdict and determine next step."""
+    verdict = state["validator_result"].verdict
 
-        if verdict == "accept":
-            from message_bus import message_bus
-            message_bus.publish_sync("log", "✅ Prompt validation passed! Proceeding to moderation...")
-            return "continue"
-        else:
-            return "stop"
+    if verdict == "accept":
+        from message_bus import message_bus
+
+        message_bus.publish_sync(
+            "log", "✅ Prompt validation passed! Proceeding to moderation..."
+        )
+        return "continue"
+    else:
+        return "stop"
+
 
 def _check_word_count(self, state: ModerationState) -> str:
-        """Check if prompt has less than 15 words."""
-        word_count = len(state["prompt"].split())
-        print(f"🔎 Word count: {word_count}")
+    """Check if prompt has less than 15 words."""
+    word_count = len(state["prompt"].split())
+    print(f"🔎 Word count: {word_count}")
 
-        if word_count < 15:
-            print("⚠️ Prompt is too short, improving context...")
-            return "improve_short"
-        else:
-            print("✅ Prompt has sufficient length, improving context...")
-            return "improve_long"
+    if word_count < 15:
+        print("⚠️ Prompt is too short, improving context...")
+        return "improve_short"
+    else:
+        print("✅ Prompt has sufficient length, improving context...")
+        return "improve_long"
+
 
 def _check_decision(self, state: ModerationState) -> str:
-        """Check decision and determine next step."""
-        decision = state["result"].decision
+    """Check decision and determine next step."""
+    decision = state["result"].decision
 
-        if decision == "positive":
-            print("✅ Prompt approved! Proceeding to story generation...")
-            return "generate"
-        else:
-            print("❌ Prompt needs improvement. Please try again.")
-            return "retry"
+    if decision == "positive":
+        print("✅ Prompt approved! Proceeding to story generation...")
+        return "generate"
+    else:
+        print("❌ Prompt needs improvement. Please try again.")
+        return "retry"
+
 
 def generate_story_images(self, prompt: str, age: int, language: str) -> dict:
-        """Generate story images using session prompt directly without re-improvement."""
-        state = ModerationState(
-            mode="guided",
-            prompt=prompt,
-            language=language,
-            age=age,
-            story_data={},
-            validator_result=None,
-            response="",
-            result=None,
-            story_json={},
-            session_frames={},
-            image_paths=[]
-        )
+    """Generate story images using session prompt directly without re-improvement."""
+    state = ModerationState(
+        mode="guided",
+        prompt=prompt,
+        language=language,
+        age=age,
+        story_data={},
+        validator_result=None,
+        response="",
+        result=None,
+        story_json={},
+        session_frames={},
+        image_paths=[],
+    )
 
-        # Use the session prompt directly without re-improvement
-        result_state = self.generate_story_image(state)
+    # Use the session prompt directly without re-improvement
+    result_state = self.generate_story_image(state)
 
-        import json
-        print("\n=== Generated Story JSON ===")
-        print(json.dumps(result_state["story_json"], indent=2, ensure_ascii=False))
-        print("=== End Story JSON ===\n")
+    import json
 
-        if "session_frames" in result_state:
-            print("\n=== Session Frames Dictionary ===")
-            for frame_key, frame_data in result_state["session_frames"].items():
-                print(f"{frame_key}: {frame_data['title']} -> {frame_data['image_path']}")
-            print("=== End Session Frames ===\n")
+    print("\n=== Generated Story JSON ===")
+    print(json.dumps(result_state["story_json"], indent=2, ensure_ascii=False))
+    print("=== End Story JSON ===\n")
 
-        return result_state
+    if "session_frames" in result_state:
+        print("\n=== Session Frames Dictionary ===")
+        for frame_key, frame_data in result_state["session_frames"].items():
+            print(f"{frame_key}: {frame_data['title']} -> {frame_data['image_path']}")
+        print("=== End Session Frames ===\n")
 
+    return result_state
