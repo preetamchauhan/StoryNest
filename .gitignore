@@ -1,2 +1,4 @@
 /frontend/node_modules
 /Environment
+/__pycache__/*.pyc
+/lancedb

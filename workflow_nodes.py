@@ -149,7 +149,7 @@ class GuidedModeNode:
         return state
 
 
-class FreeFormModeNode:
+class FreeformModeNode:
     """Handle free-form mode = open play mode."""
 
     def __call__(self, state):

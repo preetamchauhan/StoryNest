@@ -134,8 +134,8 @@ if (event.type === 'error') {
         <div className="text-xs sm:text-sm text-red-700 dark:text-red-300 font-medium 
           whitespace-pre-line">
           {(() => {
-            const errorText = event.data.error;
-            if (errorText.includes('✦')) {
+            const errorText = event?.data?.error;
+            if (errorText?.includes('✦')) {
               return errorText.split('✦').map((part: string, i: number) => {
                 if (i % 2 === 1 && part.trim()) {
                   // This is the text between sparkles - highlight it with copy button

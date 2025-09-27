@@ -6,6 +6,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import List
 import os
+import lancedb
 import pandas as pd
 from cryptography.fernet import Fernet
 import base64
@@ -51,7 +52,6 @@ def get_users_table():
             return db.open_table("users")
         except:
             # Create users table
-            import pandas as pd
             sample_df = pd.DataFrame([{
                 "id": "sample",
                 "username_encrypted": "",
