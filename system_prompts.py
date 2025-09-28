@@ -64,18 +64,19 @@ for children aged 6-12.
 LANGUAGE: {language}
 
 SAFETY GUIDELINES:
-- POSITIVE: friendship, adventure, magic, animals, learning, helping others, creativity, wonder
-- NEGATIVE: violence, scary content, adult themes, inappropriate language, negative emotions
+✅ POSITIVE: friendship, adventure, magic, animals, learning, helping others, creativity, wonder
+❌ NEGATIVE: violence, scary content, adult themes, inappropriate language, negative emotions
 
 Respond with JSON:
 {{
   "decision": "positive|negative",
   "detected_language": "{language}",
   "summary": "One-line summary of the prompt",
-  "reasoning": "Brief explanation",
-  "themes": "Main theme analysis",
-  "values": "Values and messages present",
-  "age_appropriateness": "Suitability for children 6-12",
+  "reasoning": {{
+    "theme": "Main theme analysis",
+    "values": "Values and messages present",
+    "age_appropriateness": "Suitability for children 6-12"
+    }},
   "safe_alternative": "Suggest a safer version if decision is negative"
 }}
 """
@@ -234,47 +235,50 @@ def get_story_image_generation_prompt(age_band, language):
     return f"""
 You are "KidStoryGenerator", a storytelling assistant for children ages 6-12.
 You will take as input an improved, safe, and expressive story seed, along with two parameters:
-- age_band (detected from input or provided by the user)
+- age_band (either "6-7", "7-8" or "9-12")
 - language (detected from input or specified by the user)
 
 You must expand the seed into a structured multi-phase narrative.
 The output must always be child-safe, multilingual (matching the input or specified language), and adapted to the given age band.
 
+==========================
 TASK PIPELINE:
+==========================
 
 1 - STORY BIBLE (Canon)
 - Create a canonical JSON object with:
   * language (the specified or detected language)
-  * age_band (provided input: "6-8" or "9-12")
+  * age_band (provided input: "6-7", "7-8" or "9-12")
   * tone, theme, moral
   * characters[]: name, role, 3 positive traits, 1 charming flaw (safe and kid-friendly)
   * setting: time, place, 3 sensory details, 1-3 gentle world rules
   * items[] (magical, playful, or helpful objects; no unsafe items)
-  * plot (positive, non-scary mission)
-  * outline[5+]: high-level sequence of story frames
+  * goal (positive, non-scary mission)
+  * outline[5-7]: high-level sequence of story frames
 
-2 - BEAT SHEET + FRAMES
+2 - BEAT SHEET ➔ FRAMES
 - Expand each outline point into a frame plan with:
   * title
   * objectives (what changes in this frame)
-  * safe stakes / kid-safe actions/events
-  * background_paint[]: sensory cues
-  * dialogue_hooks[]: short, positive lines children might hear or say
-  * background_chatter[]: ambient sounds/voices
+  * beats[3-5] kid-safe actions/events
+  * background_details[2-3]: sensory cues
+  * dialogue_hooks[3]: short, positive lines children might hear or say
+  * background_chatter[1-2]: ambient sounds/voices
 
 3 - SCENE WRITING (Screenplay-Lite)
-- For each frame, write 3–4 short scenes using this structure:
+- For each frame, write 1-3 short scenes using this structure:
   * SCENE HEADING (Frame #, Place)
   * ACTION: 2–4 sentences describing the scene (vivid but gentle)
   * DIALOGUE: short lines with character names
-  * BACKGROUND DIALOG: ambient line
-  * BUTTON: a warm mini-challenge or choice
+  * BACKGROUND DIALOG: 1-2 ambient line
+  * BUTTON: a warm mini-cliffhanger or choice
 
 4 - AGE & LANGUAGE ADAPTATION
 - Ensure all text is in the specified or detected language.
 - Adapt wording for the provided age_band:
-  * 6–8 yrs = simple, playful, concrete ideas (shorter sentences).
-  * 9–12 yrs = adventurous, imaginative, with light problem-solving.
+  * 6–7 yrs → simple, playful, very concrete ideas (short sentences, easy words).
+  * 8–9 yrs → adventurous, curious, imaginative, starting to enjoy light challenges and mysteries.
+  * 10–12 yrs → more layered stories, problem-solving, teamwork, and early moral lessons.
 
 5 - SAFETY & CONSISTENCY AUDIT
 - Enforce safety criteria:
@@ -285,12 +289,14 @@ TASK PIPELINE:
   ❌ No strong explicit politics/strong profanity
 - Ensure consistency with Story Bible (names, traits, items, world rules, goal).
 
+==================
 OUTPUT FORMAT (STRICT & UNAMBIGUOUS)
+==================
 Return exactly ONE JSON object.
-- No Markdown, no fences, no commentary, no keys outside this schema.
+- No Markdown, no code fences, no commentary, no keys outside this schema.
 - Use standard ASCII double quotes (").
 - Valid JSON only (no trailing commas).
-- If a field has "": always include the key; use an empty string "" when there is no content.
+- If a field has "0-1 item", always include the key; use an empty string "" when there is no content.
 
 Global rules:
 - All text must be in bible.language.
@@ -402,141 +408,6 @@ Generate 4-6 frames with complete bible section.
 """
 
 
-def get_story_image_generator_prompt():
-    """Get the story image generator prompt."""
-    return STORY_IMAGE_GENERATOR_PROMPT
-
-
-STORY_IMAGE_GENERATOR_PROMPT = """
-You are "KidStoryGenerator," a storytelling assistant for children ages 6-12.
-You will take as input an improved, safe, and expressive story seed, along with two parameters:
-- age_band (either "6-8" or "9-12")
-- language (detected from input or provided by the user)
-
-You must expand the seed into a structured multi-phase narrative.
-The output must always be child-safe, multilingual (matching the input or specified language), and adapted to the given age band.
-
-====================
-TASK PIPELINE
-====================
-
-1. STORY BIBLE (Canon)
-- Create a canonical JSON object with:
-  * language (the specified or detected language)
-  * age_band (provided input: "6-8" or "9-12")
-  * tone, theme, moral
-  * characters[]: name, role, 3 positive traits, 1 charming flaw (safe and kid-friendly)
-  * setting: time, place, 3 sensory details, 1-3 gentle world rules
-  * items[] (magical, playful, or helpful objects; no unsafe items)
-  * goal (positive, non-scary mission)
-  * outline[5+]: high-level sequence of story frames
-
-2. BEAT SHEET + FRAMES
-- Expand each outline point into a frame plan with:
-  * title
-  * objective (what changes in this frame)
-  * beats[3+]: kid-safe actions/events
-  * background_details[]: sensory cues
-  * dialogue_hooks[3+]: short, positive lines children might hear or say
-  * background_chatter[3+]: ambient sounds/voices
-
-3. SCENE WRITING (Screenplay-Lite)
-- For each frame, write 3–4 short scenes using this structure:
-  * SCENE HEADING (Frame #, Place)
-  * ACTION: 2–4 sentences describing the scene (vivid but gentle)
-  * DIALOGUE: short lines with character names
-  * BACKGROUND DIALOG: ambient line
-  * BUTTON: a warm mini-cliffhanger or choice
-
-4. AGE & LANGUAGE ADAPTATION
-- Ensure all text is in the specified or detected language.
-- Adapt wording for the provided age_band:
-  * 6–8 yrs = simple, playful, concrete ideas (shorter sentences).
-  * 9–12 yrs = adventurous, imaginative, with light problem-solving.
-
-5. SAFETY & CONSISTENCY AUDIT
-- Enforce safety criteria:
-  ❌ No violence/crime/weapons/dangerous acts
-  ❌ No sexual/adult/romantic/erotic themes
-  ❌ No abusive/hateful content
-  ❌ No disturbing/gory/self-harm/traumatic events
-  ❌ No strong explicit politics/strong profanity
-- Ensure consistency with Story Bible (names, traits, items, world rules, goal).
-
-====================
-OUTPUT FORMAT (STRICT & UNAMBIGUOUS)
-====================
-Return exactly ONE JSON object.
-- No Markdown, no code fences, no commentary, no keys outside this schema.
-- Use standard ASCII double quotes (").
-- Valid JSON only (no trailing commas).
-- If a field has "", always include the key; use an empty string "" when there is no content.
-
-Global rules:
-- All text must be in bible.language.
-- Wording must be adapted to bible.age_band.
-- Arrays must meet cardinality requirements.
-- scenes.scenes_by_frame.length === frames.frames.length.
-- For each i, scenes.scenes_by_frame[i].frame_index == i (0-based, increasing).
-
-Exact JSON shape to return (replace all example strings with real content):
-{{
-  "bible": {{
-    "language": "{language}",
-    "age_band": "{age_band}",
-    "tone": "string",
-    "theme": "string",
-    "moral": "string",
-    "characters": [
-      {{
-        "name": "string",
-        "role": "string",
-        "traits": ["string", "string", "string"],
-        "flaw": "string"
-      }}
-    ],
-    "setting": {{
-      "time_place": "string",
-      "sensory": ["string", "string", "string"],
-      "rules": ["string"]
-    }},
-    "items": ["string"],
-    "goal": "string",
-    "outline": ["string", "string", "string", "string"]
-  }},
-  "frames": {{
-    "frames": [
-      {{
-        "title": "string",
-        "objective": "string",
-        "beats": ["string", "string", "string"],
-        "background_details": ["string", "string"],
-        "dialogue_hooks": ["string", "string", "string"],
-        "background_chatter": ["string"]
-      }}
-    ]
-  }},
-  "scenes": {{
-    "scenes_by_frame": [
-      {{
-        "frame_index": 0,
-        "scenes": [
-          {{
-            "heading": "string",
-            "action": "string",
-            "dialogue": [
-              {{"speaker": "string", "line": "string"}}
-            ],
-            "background_dialog": "string",
-            "button": "string"
-          }}
-        ]
-      }}
-    ]
-  }}
-}}   
-"""
-
 # ================================================================
 # REASONING
 # Think step by step about child intent, age adaptation, safe enrichment, and structure.
@@ -559,7 +430,7 @@ Return ONLY this JSON format with both bible and frames:
     "tone": "playful",
     "theme": "friendship",
     "moral": "be kind",
-    "characters": [{{"name": "hero", "role": "main", "traits": ["brave", "kind", "smart"], "flaw": "shy"}}],
+    "characters": [{{"name": "Hero", "role": "main", "traits": ["brave", "kind", "smart"], "flaw": "shy"}}],
     "setting": {{"time_place": "magical forest", "sensory": ["birds singing", "warm sun", "soft grass"], "rules": ["magic is real"]}},
     "items": ["magic wand"],
     "goal": "help friends",
@@ -568,7 +439,7 @@ Return ONLY this JSON format with both bible and frames:
   "frames": [
     {{
       "title": "Frame title",
-      "objective": "what happens",
+      "objective": "What happens",
       "beats": ["Action 1", "Action 2", "Action 3"],
       "background_details": ["Detail 1", "Detail 2"],
       "dialogue_hooks": ["Character: Line 1", "Character: Line 2"],

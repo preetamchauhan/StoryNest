@@ -223,7 +223,7 @@ return (
   </CardContent>
 </Card>
 
-/* Challenge & Tone */
+
 <div className="grid md:grid-cols-2 gap-6">
   <Card className="shadow-lg">
     <CardHeader>
@@ -281,7 +281,6 @@ return (
 </div>
 
 
-/* Values */
 <Card className="shadow-lg">
   <CardHeader>
     <CardTitle className="flex items-center gap-2">

@@ -30,17 +30,17 @@ class ModerationResult(BaseModel):
     """Structured moderation result."""
 
     decision: str = Field(description="Either 'positive' or 'negative'")
-    reasons: str = Field(description="Detailed reasoning for the decision")
-    quality_score: int = Field(description="Quality score (0-100)")
-    suggestions: str = Field(description="Suggestions for improvement if negative")
+    reasoning: str = Field(description="Detailed reasoning for the decision")
+    suggestions: str = Field(default="", description="Suggestions for improvement if negative")
 
 
 class ValidatorResult(BaseModel):
     """Structured validation result."""
 
-    verdict: str = Field(description="Accept, revise, or reject")
-    language: str = Field(description="Language for verdict")
-    quality_score: int = Field(description="Quality score (0-100)")
+    verdict: str = Field(description="accept, revise, or reject")
+    reason: str = Field(description="Justification for verdict")
+    language: str = Field(description="Detected language")
+    quality_score: int = Field(description="Quality score 0-100")
     improved_prompt: str = Field(description="Improved version of prompt")
 
 
@@ -52,8 +52,9 @@ class ModerationState(TypedDict):
     age: int
     language: str
     story_data: dict  # Structured story data model
-    result: ValidatorResult
+    validator_result: ValidatorResult
     response: str
+    result: ModerationResult
     story_json: dict
     story_dict: dict
     session_frames: dict  # Session dictionary with frame data and images
@@ -86,7 +87,7 @@ class LangGraphModerationClient:
         self.parse_response = ParseResponseNode()
         self.improve_short = ImproveShortNode(self.llm)
         self.improve_long = ImproveLongNode(self.llm)
-        self.kid_story_generator = KidStoryGeneratorNode(self.llm)
+        self.generate_story = KidStoryGeneratorNode(self.llm)
         self.generate_story_image = GenerateStoryImageNode(self.llm)
 
         self.workflow = self._create_workflow()
@@ -107,7 +108,7 @@ class LangGraphModerationClient:
         workflow.add_node("parse", self.parse_response)
         workflow.add_node("improve_short", self.improve_short)
         workflow.add_node("improve_long", self.improve_long)
-        workflow.add_node("generate_story", self.kid_story_generator)
+        workflow.add_node("generate_story", self.generate_story)
         workflow.add_node("generate_story_image", self.generate_story_image)
 
         # Set entry point to choice menu for mode routing
@@ -130,6 +131,7 @@ class LangGraphModerationClient:
         workflow.add_edge("freeform_mode", "moderate")
 
         # Moderation pipeline
+        workflow.add_edge("moderate", "parse")
         workflow.add_conditional_edges(
             "parse",
             self._check_word_count,
@@ -217,7 +219,7 @@ class LangGraphModerationClient:
     def generate_story_images(self, prompt: str, age: int, language: str) -> dict:
         """Generate story images using session prompt directly without re-improvement."""
         state = ModerationState(
-            mode="guided",
+            mode="",
             prompt=prompt,
             language=language,
             age=age,
@@ -226,6 +228,7 @@ class LangGraphModerationClient:
             response="",
             result=None,
             story_json={},
+            story={},
             session_frames={},
             image_paths=[],
         )

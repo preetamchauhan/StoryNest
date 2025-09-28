@@ -54,6 +54,7 @@ class LangGraphServer:
                         yield {"type": "story_complete", "data": msg["data"]}
                     elif msg["type"] == "story_chunk":
                         yield {"type": "story_chunk", "data": msg["data"]}
+                await asyncio.sleep(0.1)        
 
             # Get any remaining messages after workflow completes
             sync_messages = message_bus.get_sync_messages()
