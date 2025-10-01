@@ -93,9 +93,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                     }`}
                 >
-                  6
+                <span className="hidden sm:inline">🧒</span>6-7
                 </button>
-                <span className="hidden sm:inline">·</span>
                 <button
                   onClick={() => setAge(8)}
                   className={`px-1 sm:px-2 py-1 text-xs font-bold rounded-full transition-all duration-200 ${age === 8
@@ -114,7 +113,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                     }`}
                 >
-                  <span className="hidden sm:inline">👨</span>10-12
+                  <span className="hidden sm:inline">🧑</span>10-12
                 </button>
               </div>
             </div>
@@ -124,7 +123,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               onClick={() => setIsDark(!isDark)}
               className="animate-wiggle hover:animate-none bg-gradient-to-r from-yellow-100 to-blue-100 dark:from-gray-700 dark:to-gray-600 hover:scale-110 transition-transform"
             >
-              {isDark ? '🌙' : '☀️'}
+              {isDark ? '☀️' : '🌙'}
             </Button>
           </div>
         </div>

@@ -11,6 +11,7 @@ interface SavedStory {
   title: string;
   text: string;
   language: string;
+  age: number;
   audioUrl?: string;
   createdAt: string;
   framesData?: any;
@@ -22,18 +23,19 @@ const MyStoriesPage: React.FC = () => {
   const navigate = useNavigate();
   const [savedStories, setSavedStories] = useState<SavedStory[]>([]);
   const [selectedStory, setSelectedStory] = useState<SavedStory | null>(null);
+  const [showStoryViewer, setShowStoryViewer] = useState(false);
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
   const [audioStory, setAudioStory] = useState<SavedStory | null>(null);
   const [showTextViewer, setShowTextViewer] = useState(false);
   const [textStory, setTextStory] = useState<SavedStory | null>(null);
-  const [showStoryViewer, setShowStoryViewer] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalStories, setTotalStories] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
-  const storiesPerPage = 6;
+  const storiesPerPage = 9;
 
   useEffect(() => {
     loadSavedStories();
@@ -62,6 +64,7 @@ const MyStoriesPage: React.FC = () => {
         console.log('Loaded stories:', result.stories.map((s: any) => ({
           id: s.id,
           title: s.title,
+          audioUrl: s.audioUrl,
           hasAudio: !!s.audioUrl,
           hasFramesData: !!s.framesData,
           hasImagePaths: !!s.imagePaths,
@@ -160,8 +163,8 @@ const MyStoriesPage: React.FC = () => {
 
   const getLanguageFlag = (langCode: string) => {
     const flags: Record<string, string> = {
-      'hi': '🇮🇳', 'en': '🇬🇧', 'es': '🇪🇸',
-      'fr': '🇫🇷', 'de': '🇩🇪', 'it': '🇮🇹',
+      'hi': '🇮🇳', 'en': 'us', 'es': '🇪🇸',
+      'fr': '🇫🇷', 'de': '🇩🇪',
       'ja': '🇯🇵', 'ko': '🇰🇷', 'ar': '🇸🇦',
     };
     return flags[langCode] || '🌐';
@@ -172,45 +175,53 @@ const MyStoriesPage: React.FC = () => {
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between gap-2">
-            <button
-              onClick={async () => {
-                try {
-                  await apiRequest('/api/clear-sessions', { method: 'POST' });
-                } catch (error) {
-                  console.error('Failed to clear server sessions:', error);
-                }
-                navigate('/');
-              }}
-              className="text-purple-600 hover:text-purple-800 text-xl sm:text-2xl"
-            >
-              My Stories
-            </button>
-            <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 ml-0 sm:ml-4">
-              {searchQuery ? `${savedStories.length} results` : `${savedStories.length} of ${totalStories} stories`}
+          <div className="flex flex-col gap-4">
+            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2'>
+              <div className='flex items-center gap-2 sm:gap-3'>
+                <button
+                  onClick={async () => {
+                    try {
+                      await apiRequest('/api/clear-sessions', { method: 'POST' });
+                    } catch (error) {
+                      console.error('Failed to clear server sessions:', error);
+                    }
+                    navigate('/');
+                  }}
+                  className="text-purple-600 hover:text-purple-800 text-xl sm:text-2xl"
+                >
+                  ←
+                </button>
+                <h1 className='text-lg sm:text-2xl md:text-3xl font-bold text-purple-700 dark:text-purple-300'>
+                  📚 My Stories</h1>
+              </div>
+              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 ml-8 sm:ml-0">
+                {searchQuery ? `${savedStories.length} results` : `${savedStories.length} of ${totalStories} stories`}
+              </div>
+            </div>
+
+            {/* Search Bar */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search stories..."
+                value={searchQuery}
+                onChange={(e) => handleSearchInput(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 sm:py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm sm:text-base"
+              />
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                {isSearching ? '🔄' : '🔎'}
+              </div>
+              {searchQuery && (
+                <button
+                  onClick={() => handleSearchInput('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              )}
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Search Bar */}
-      <div className="relative">
-        <input
-          type="text"
-          placeholder="Search stories..."
-          value={searchQuery}
-          onChange={(e) => handleSearchInput(e.target.value)}
-          className="w-full p-3 pl-10 pr-4 py-2 sm:py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm sm:text-base"
-        />
-        {isSearching && <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">⏳</span>}
-        {searchQuery && (
-          <button
-            onClick={() => handleSearchInput('')}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            ✕
-          </button>
-        )}
       </div>
 
       {/* Content */}
@@ -218,14 +229,16 @@ const MyStoriesPage: React.FC = () => {
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <div className="text-center">
-              <h2 className="text-6xl font-bold text-purple-600 mb-2 animate-bounce">📖</h2>
-              <p className="text-gray-500">Please wait while we fetch your magical tales</p>
+              <div className="text-6xl mb-4 animate-bounce">📚</div>
+              <div className="text-xl font-semibold text-purple-600 mb-2">Loading your Stories...</div>
+              <div className="text-gray-500">Please wait while we fetch your magical tales</div>
             </div>
           </div>
         ) : savedStories.length === 0 ? (
           <div className="text-center py-16">
+            <div className="text-8xl mb-6">📚</div>s
             <h2 className="text-2xl font-semibold text-gray-600 dark:text-gray-400 mb-4">No stories yet</h2>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">Create your first story to see it here!</p>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">Create your first story to see it here!</p>
             <button
               onClick={async () => {
                 try {
@@ -245,23 +258,23 @@ const MyStoriesPage: React.FC = () => {
             {savedStories.map((story) => (
               <div
                 key={story.id}
-                className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg transition duration-200 hover:scale-105 border border-purple-200 dark:border-gray-700"
+                className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-purple-100 dark:border-gray-700"
               >
                 {/* Story Header */}
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-bold text-purple-700 dark:text-purple-300 text-base sm:text-lg line-clamp-2">{story.title}</h3>
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="font-bold text-purple-700 dark:text-purple-300 text-base sm:text-lg line-clamp-2 flex-1">{story.title}</h3>
                   <button
                     onClick={() => deleteStory(story.id)}
                     className="text-red-500 hover:text-red-700 ml-2 text-lg hover:scale-110 transition-all"
                   >
-                    ✕
+                    🗑️
                   </button>
                 </div>
 
                 {/* Story Info */}
                 <div className="flex items-center gap-2 mb-4 text-sm text-gray-600 dark:text-gray-400">
                   <span className="text-lg">{getLanguageFlag(story.language)}</span>
-                  <span>@{story.id}</span>
+                  <span>Age {story.age}</span>
                   <span>•</span>
                   <span>{formatDate(story.createdAt)}</span>
                 </div>
@@ -307,7 +320,7 @@ const MyStoriesPage: React.FC = () => {
         )}
 
         {/* Load More Button */}
-        {searchQuery && hasMore && (
+        {!searchQuery && hasMore && (
           <div className="text-center mt-6 sm:mt-8 px-4">
             <button
               onClick={loadMore}
@@ -322,11 +335,11 @@ const MyStoriesPage: React.FC = () => {
       {/* Audio Player */}
       {showAudioPlayer && audioStory && (
         <div className="fixed bottom-4 left-4 right-4 z-50">
-        <KidAudioPlayer
-          audioUrl={audioStory.audioUrl!}
-          storyText={audioStory.text}
-          onClose={closeAudioPlayer}
-        />
+          <KidAudioPlayer
+            audioUrl={audioStory.audioUrl}
+            storyText={audioStory.text}
+            onClose={closeAudioPlayer}
+          />
         </div>
       )}
 

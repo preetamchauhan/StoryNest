@@ -12,8 +12,8 @@ const MyStoriesButton: React.FC = () => {
       className="text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900/20 text-xs sm:text-sm px-2 sm:px-3"
       onClick={() => navigate('/my-stories')}
     >
-      <span className="sm:hidden">📖</span>
-      <span className="hidden sm:inline">📖 My Stories</span>
+      <span className="sm:hidden">📚</span>
+      <span className="hidden sm:inline">📚 My Stories</span>
     </Button>
   );
 };

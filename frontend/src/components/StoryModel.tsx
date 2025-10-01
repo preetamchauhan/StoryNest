@@ -22,7 +22,7 @@ const StoryModal: React.FC<StoryModalProps> = ({ isOpen, onClose, title, storyTe
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-white text-lg sm:text-xl">✨</span>
+                <span className="text-white text-lg sm:text-xl">📖</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-purple-700 dark:text-purple-300">
                 {title || 'Your Magical Story'}
@@ -58,7 +58,7 @@ const StoryModal: React.FC<StoryModalProps> = ({ isOpen, onClose, title, storyTe
             />
             <div className="text-center">
               <p className="text-sm text-purple-600 dark:text-purple-400 font-medium">
-                {t('hopeYouEnjoyed')} ✨
+               ✨ {t('hopeYouEnjoyed')} ✨
               </p>
             </div>
           </div>

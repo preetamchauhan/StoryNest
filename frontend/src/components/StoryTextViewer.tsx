@@ -19,7 +19,7 @@ const StoryTextViewer: React.FC<StoryTextViewerProps> = ({ title, text, onClose 
           <h2 className="text-lg sm:text-2xl font-bold text-purple-700">📖 {title}</h2>
           <button
             onClick={onClose}
-            className="h-8 w-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-all hover:scale-110"
+            className="w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-all hover:scale-110"
           >
             ✖
           </button>
@@ -27,8 +27,8 @@ const StoryTextViewer: React.FC<StoryTextViewerProps> = ({ title, text, onClose 
 
         {/* Story Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-          <div className="prose-lg max-w-none">
-            <div className="bg-gradient-to-b from-blue-50 to-purple-50 rounded-xl p-4 sm:p-6 border border-purple-200">
+          <div className="prose prose-lg max-w-none">
+            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-4 sm:p-6 border border-purple-200">
               <p className="text-gray-800 leading-relaxed whitespace-pre-wrap text-sm sm:text-base">
                 {text}
               </p>
@@ -43,7 +43,7 @@ const StoryTextViewer: React.FC<StoryTextViewerProps> = ({ title, text, onClose 
               onClick={onClose}
               className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-lg font-semibold transition-all"
             >
-              {t('close') || 'Close'}
+              Close
             </button>
           </div>
         </div>

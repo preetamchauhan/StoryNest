@@ -24,6 +24,7 @@ const SurpriseStory: React.FC = () => {
 
     const request = {
       mode: "surprise" as const,
+      prompt: "",
       age,
       language: currentLanguage.code,
       story_data: {},
@@ -53,7 +54,7 @@ const SurpriseStory: React.FC = () => {
       <Card className="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20 border-none shadow-xl">
         <CardHeader className="text-center py-4">
           <CardTitle className="text-3xl font-bold flex items-center justify-center gap-3">
-            <span className="text-3xl">✨</span>
+            <span className="text-3xl">🎲</span>
             <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
               Surprise Me!
             </span>

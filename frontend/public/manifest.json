@@ -1,20 +1,20 @@
 {
-    "short_name": "Story Nest",
-    "name": "Story Nest - AI Storytelling for Children",
-    "icons": [
-        {
-            "src": "storynest.png",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "storynest.png",
-            "type": "image/png",
-            "sizes": "512x512"
-        }
-    ],
-    "start_url": ".",
-    "display": "standalone",
-    "theme_color": "#3B82F6",
-    "description": "Story Nest is an AI-powered storytelling app for kids, offering magical, customizable stories."
+  "short_name": "Story Nest",
+  "name": "Story Nest - AI Storytelling for Children",
+  "icons": [
+    {
+      "src": "storynest.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "storynest.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#3B82F6",
+  "description": "Story Nest is an AI-powered storytelling app for kids, offering magical, customizable stories."
 }

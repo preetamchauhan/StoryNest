@@ -356,25 +356,44 @@ class ModeratePromptNode:
         message_bus.publish_sync("log", "🛡️ Analyzing prompt for safety...")
 
         try:
-            response = self.llm.invoke(messages)
-            parsed_response = parser.parse(response.content)
+                response = self.llm.invoke(messages)
 
-            # Convert to expected format
-            from langgraph_client import ModerationResult
+                # Clean and extract JSON from response
+                clean_content = response.content.strip()
 
-            state["result"] = ModerationResult(
-                decision=parsed_response.decision,
-                reasoning=f"Theme: {parsed_response.reasoning.get('theme', '')}. Values: {parsed_response.reasoning.get('values', '')}. Age: {parsed_response.reasoning.get('age_appropriateness', '')}.",
-                suggestions=parsed_response.safe_alternative,
-            )
+                # Remove reasoning tags if present
+                clean_content = re.sub(r"<reasoning>.*?</reasoning>", "", clean_content, flags=re.DOTALL)
 
-            message_bus.publish_sync("log", f"✅ Decision: {parsed_response.decision}")
+                # Extract JSON from markdown if present
+                json_match = re.search(r"```(?:json)?\s*({.*?})\s*```", clean_content, re.DOTALL)
+                if json_match:
+                    clean_content = json_match.group(1)
+
+                parsed_response = parser.parse(clean_content)
+
+                # Convert to expected format
+                from langgraph_client import ModerationResult
+                state["result"] = ModerationResult(
+                    decision=parsed_response.decision,
+                    reasoning=f"Theme: {parsed_response.reasoning.get('theme', '')}. Values: {parsed_response.reasoning.get('values', '')}. Age: {parsed_response.reasoning.get('age_appropriateness', '')}.",
+                    suggestions=parsed_response.safe_alternative
+                )
+
+                # Parse reasoning into separate lines for display
+                reasoning_parts = f"Theme: {parsed_response.reasoning.get('theme', '')}. Values: {parsed_response.reasoning.get('values', '')}. Age: {parsed_response.reasoning.get('age_appropriateness', '')}.".split(". ")
+                reasoning_formatted = "\n".join([f"- {part.strip()}" for part in reasoning_parts if part.strip()])
+
+                combined_message = f"✅ Decision: {parsed_response.decision}\n\nReasoning:\n{reasoning_formatted}"
+                message_bus.publish_sync("log", combined_message)
+
+                if parsed_response.safe_alternative:
+                    message_bus.publish_sync("log", f"💡 Suggestions: {parsed_response.safe_alternative}")
 
         except Exception as e:
-            # Fallback to manual parsing if structured parse fails
-            response = self.llm.invoke(messages)
-            message_bus.publish_sync("log", f"Error: {response}")
-            state["response"] = response.content.strip()
+                # Fallback: set response for ParseResponseNode to handle
+                print(f"Moderation parsing failed: {e}")
+                response = self.llm.invoke(messages)
+                state["response"] = response.content.strip()
 
         return state
 
@@ -383,6 +402,9 @@ class ParseResponseNode:
     """Parse the LLM response into structured format."""
 
     def __call__(self, state):
+        # Only run if there's a response to parse (fallback case)
+        if "response" not in state or not state["response"]:
+            return state
         response = state["response"]
 
         try:

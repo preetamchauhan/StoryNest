@@ -39,7 +39,7 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
 }
 
 export const api = {
-  post: async (endpoint: string, data: any) => {
+  async post(endpoint: string, data: any) {
     const response = await apiRequest(endpoint, {
       method: 'POST',
       body: JSON.stringify(data),
@@ -47,12 +47,12 @@ export const api = {
     return response?.json();
   },
 
-  get: async (endpoint: string) => {
+  async get(endpoint: string) {
     const response = await apiRequest(endpoint);
     return response?.json();
   },
 
-  delete: async (endpoint: string) => {
+  async delete(endpoint: string) {
     const response = await apiRequest(endpoint, { method: 'DELETE' });
     return response?.json();
   },

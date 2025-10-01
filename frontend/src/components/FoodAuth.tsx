@@ -87,17 +87,17 @@ const FoodAuth: React.FC = () => {
     <div className="max-w-md mx-auto p-4 bg-gradient-to-br from-yellow-100 via-pink-100 to-purple-100 rounded-xl shadow-lg border-2 border-rainbow" dir="ltr">
       <div className="text-center mb-4">
         <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
-          {isLogin ? '🌟 Welcome Back! ' : '🍭 Join Story Nest!'}
+          {isLogin ? '🌟 Welcome Back! ' : '🎉oin Story Nest!'}
         </h2>
         <p className="text-sm text-purple-700 font-medium">
-          {isLogin ? '⭐ Name + yummy password! ' : '🍬 Create with tasty foods!'}
+          {isLogin ? '✨ Name + yummy password! ' : '🚀 Create with tasty foods!'}
         </p>
       </div>
 
       <div className="space-y-3">
         <div className="bg-white/70 p-3 rounded-lg border border-purple-200">
           <label className="block text-base font-bold text-purple-700 mb-1 flex items-center" dir="ltr">
-            <span className="text-lg mr-1">📝</span> Your name?
+            <span className="text-lg mr-1">👋</span> Your name?
           </label>
           <input
             type="text"
@@ -133,7 +133,7 @@ const FoodAuth: React.FC = () => {
                 <div className="text-2xl mb-1">{food.emoji}</div>
                 <div className="text-xs font-bold text-gray-700">{food.name}</div>
                 {selectedFoods.includes(food.id) && (
-                  <div className="text-green-600 text-sm mt-1">✔️</div>
+                  <div className="text-green-600 text-sm mt-1">✅</div>
                 )}
               </button>
             ))}
@@ -145,11 +145,12 @@ const FoodAuth: React.FC = () => {
           <span className="text-sm font-bold text-yellow-800">
             Picked: {selectedFoods.length}/3+
           </span>
-          {selectedFoods.length >= 3 && <span className="ml-1">✅</span>}
+          {selectedFoods.length >= 3 && <span className="ml-1">🎉</span>}
         </div>
 
         {error && (
           <div className="p-3 bg-red-100 border-2 border-red-300 rounded-xl flex items-center" dir="ltr">
+            <span className='text-2xl mr-2'>😭</span>
             <span className="text-red-700 text-base font-medium">{error}</span>
           </div>
         )}
@@ -161,13 +162,13 @@ const FoodAuth: React.FC = () => {
         >
           {isLoading ? (
             <span className="flex items-center justify-center">
-              <span className="text-xl mr-2">⏳</span>
-              <span className="text-xl">{isLogin ? 'Let’s Go!' : 'Create My Account!'}</span>
+              <span className="text-xl mr-2">🍪</span>
+              Please wait...
             </span>
           ) : (
             <span className="flex items-center justify-center">
               <span className="text-xl mr-2">{isLogin ? '🔑' : '🚀'}</span>
-              <span className="text-xl">{isLogin ? 'Login' : 'Create My Account'}</span>
+              {isLogin ? 'Let\'s Go!' : 'Create My Account'}
             </span>
           )}
         </button>
@@ -182,7 +183,7 @@ const FoodAuth: React.FC = () => {
             }}
             className="text-purple-600 hover:text-purple-800 text-sm font-bold flex items-center justify-center mx-auto"
           >
-            <span className="text-lg mr-1">{isLogin ? '🌈' : '🔐'}</span>
+            <span className="text-lg mr-1">{isLogin ? '🔑' : '🔐'}</span>
             {isLogin ? 'New? Create account!' : 'Have account? Login!'}
           </button>
         </div>

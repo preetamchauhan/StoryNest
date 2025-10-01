@@ -4,6 +4,8 @@ import StoryViewer from './StoryViewer';
 import LoadingProgress from './LoadingProgress';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useApp } from '../contexts/AppContext';
+import { useAuth } from '../contexts/AuthContext';
+import { apiRequest, saveStory } from '../lib/api';
 
 interface StoryActionsProps {
   storyTitle?: string;
@@ -16,7 +18,7 @@ interface StoryActionsProps {
 const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size = 'large', originalPrompt, autoSaveOnMount = false }) => {
   const { t, currentLanguage } = useLanguage();
   const { age } = useApp();
-
+  const { user } = useAuth();
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
   const [isGeneratingImages, setIsGeneratingImages] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
@@ -28,13 +30,9 @@ const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size
   const [loadingTask, setLoadingTask] = useState<'story' | 'images' | 'audio'>('story');
 
   React.useEffect(() => {
-  if (!autoSaveOnMount) return;
-
-  const handler = setTimeout(() => {
+  if (autoSaveOnMount){
     autoSaveStory();
-  }, 1000); // wait 1s before saving
-
-  return () => clearTimeout(handler); // cleanup
+  }
 }, [autoSaveOnMount, storyTitle, storyText, currentLanguage.code, age]);
 
   const handleListen = async () => {
@@ -42,15 +40,18 @@ const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size
       setShowAudioPlayer(false);
       return;
     }
+
     setIsGeneratingAudio(true);
     setLoadingTask('audio');
     setShowLoadingProgress(true);
 
     try {
       console.log('🎙️ Generating audio for story...');
-      const response = await fetch('http://localhost:8000/api/generate-audio', {
+      console.log("Current user:", user);
+      const token = localStorage.getItem('token');
+      console.log("Auth token:", token);
+      const response = await apiRequest('/api/generate-audio', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: storyText,
           language: currentLanguage.code,
@@ -58,7 +59,7 @@ const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size
         })
       });
 
-      const result = await response.json();
+      const result = await response?.json();
 
       if (result.success) {
         const audioUrl = `http://localhost:8000${result.audio_path}`;
@@ -67,7 +68,7 @@ const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size
         console.log('✅ Audio generated, opening player');
 
         // Auto-save to DB after audio generation with the database audio URL
-        await autoSaveStory(audioUrl, storyData);
+        await autoSaveStory(result.audio_path);
       } else {
         alert(`❌ Audio generation failed: ${result.error}`);
       }
@@ -97,20 +98,22 @@ const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size
         text: storyText,
         language: currentLanguage.code,
         age,
-        audioUrl: audioUrl || generatedAudioUrl || null,
+        audioUrl: audioUrl || (generatedAudioUrl ? generatedAudioUrl.replace('http://localhost:8000', '') : null),
         framesData: imageData?.framesData || storyData?.framesData || null,
         imagePaths: imageData?.imagePaths || storyData?.imagePaths || null
       };
 
-      console.log('💾 Saving story with data:', savedStory);
-
-      const response = await fetch('http://localhost:8000/api/save-story', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ story: savedStory })
+      console.log('💾 Saving story with data:', {
+        id: savedStory.id,
+        audioUrl: savedStory.audioUrl,
+        generatedAudioUrl: generatedAudioUrl,
+        audioUrlParam: audioUrl,
+        hasframesData: !!savedStory.framesData,
+        hasimagePaths: !!savedStory.imagePaths
       });
 
-      const result = await response.json();
+      // Save to vector database
+      const result = await saveStory(savedStory)
 
       if (result.success) {
         console.log('✅ Story saved to database successfully');
@@ -137,9 +140,8 @@ const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size
     setShowLoadingProgress(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/generate-images', {
+      const response = await apiRequest('/api/generate-images', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: originalPrompt || storyText,
           age,
@@ -147,7 +149,7 @@ const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size
         })
       });
 
-      const result = await response.json();
+      const result = await response?.json();
 
       if (result.success) {
         // Store story data and show viewer
@@ -159,7 +161,7 @@ const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size
         setShowStoryViewer(true);
 
         // Auto-save to DB after images generation
-        await autoSaveStory(null, newStoryData);
+        await autoSaveStory(generatedAudioUrl, newStoryData);
       } else {
         alert(`❌ Error: ${result.error}`);
       }
@@ -185,7 +187,7 @@ const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size
           className={`${buttonSize} bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 disabled:from-gray-100 disabled:to-gray-200 text-blue-700 hover:text-blue-800 disabled:text-gray-400 rounded-xl font-semibold shadow-md transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 flex items-center gap-2 border border-blue-200 hover:border-blue-300`}
         >
           <span className={`${iconSize} ${isGeneratingAudio ? 'animate-spin' : ''}`}>
-            {isGeneratingAudio ? '🎧' : showAudioPlayer ? '🙈' : ''}
+            {isGeneratingAudio ? '⏳' : showAudioPlayer ? '🙈' : ''}
           </span>
           <span>{isGeneratingAudio ? 'Generating...' : showAudioPlayer ? 'Hide Player' : t('listen')}</span>
         </button>

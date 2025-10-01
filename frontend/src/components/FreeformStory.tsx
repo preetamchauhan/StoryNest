@@ -20,12 +20,13 @@ const FreeformStory: React.FC = () => {
   }, [setIsLanguageSelectionDisabled]);
 
   const generateStory = () => {
+    clearEvents();
     setShowChat(true);
 
     const request = {
       mode: "freeform" as const,
-      age,
       prompt,
+      age,
       language: currentLanguage.code,
       story_data: {},
     };
@@ -71,7 +72,7 @@ const FreeformStory: React.FC = () => {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            ✍️ {t("tellUsIdea")}
+            💭 {t("tellUsIdea")}
           </CardTitle>
         </CardHeader>
         <CardContent>

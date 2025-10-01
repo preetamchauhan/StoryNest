@@ -38,8 +38,6 @@ interface StoryPage {
   content: string;
   imagePath?: string;
   dialogue?: Array<{ speaker: string; line: string }>;
-  isCover?: boolean;
-  isBackCover?: boolean;
 }
 
 interface StoryViewerProps {
@@ -70,7 +68,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
   const StoryPages: StoryPage[] = Object.entries(framesData).map(
     ([frameKey, frameData]: [string, any]) => {
       const frame = frameData.frame_data;
-      const scenes = frameData.scenes || [];
+      const scenes = frameData.scenes_by_frame?.scenes || [];
       let imagePath = frameData.image_path || "";
       if (imagePaths && imagePaths.length > 0) {
         const frameIndex = parseInt(frameKey.replace("frame_", "")) - 1;
@@ -131,18 +129,50 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
     }
   }, [isAutoPlay, currentPage, totalPages, nextPage]);
 
+
+  // Touch/swipe support
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      nextPage();
+    }
+    if (isRightSwipe) {
+      prevPage();
+    }
+  };
+
+
   // Render page
   const renderPage = (page: any, index: number) => {
     if (page.isCover) {
       return (
         <div className="w-full h-full bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 flex flex-col items-center justify-center text-white rounded-lg">
-          <div className="text-4xl md:text-6xl mb-4">✨</div>
+          <div className="text-4xl md:text-6xl mb-4">📚</div>
           <h1 className="text-2xl md:text-4xl font-bold text-center mb-4">
             {page.title}
           </h1>
           <p className="text-lg md:text-xl text-center opacity-90">
             {page.content}
           </p>
+          <div className="mt-8 text-sm opacity-75">
+            {StoryPages.length} Pages
+          </div>
         </div>
       );
     }
@@ -154,10 +184,10 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
           <h2 className="text-2xl md:text-4xl font-bold text-center mb-4">
             {page.title}
           </h2>
-          <p className="text-center opacity-90 md:text-lg">{page.content}</p>
-          <p className="text-sm opacity-75 text-center">
-            Created with Magic ✨
-          </p>
+          <p className="text-center opacity-90 mb-6">{page.content}</p>
+          <div className="text-sm opacity-75 text-center">
+           ✨ Created with Magic ✨
+          </div>
         </div>
       );
     }
@@ -178,7 +208,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
         {page.imagePath && (
           <div className="mb-4 md:mb-6 flex-shrink-0">
             <div
-              className={`w-full h-96 md:h-129 lg:h-144 bg-gradient-to-br ${currentTheme.colors.secondary
+              className={`w-full h-96 md:h-120 lg:h-144 bg-gradient-to-br ${currentTheme.colors.secondary
                 } rounded-lg flex items-center justify-center border-2 ${currentTheme.colors.text.replace(
                   "text-",
                   "border-"
@@ -190,8 +220,8 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
                     ? page.imagePath
                     : `http://localhost:8000${page.imagePath}`
                 }
-                alt="Story Image"
-                className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                alt={page.title}
+                className="w-full h-full object-contain rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={() =>
                   setImagePopup(
                     page.imagePath.startsWith("http")
@@ -260,9 +290,9 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
               className={`text-xs md:text-sm ${isAutoPlay ? "bg-green-100 text-green-700" : ""
                 }`}
             >
-              <span className="md:hidden">{isAutoPlay ? "⏸" : "▶️"}</span>
+              <span className="md:hidden">{isAutoPlay ? "⏸️" : "▶️"}</span>
               <span className="hidden md:inline">
-                {isAutoPlay ? "Pause" : "Auto Play"}
+                {isAutoPlay ? "⏸️ Pause" : "▶️ Auto Play"}
               </span>
             </Button>
             <Button
@@ -280,9 +310,12 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
         {/* Story Container */}
         <div
           className={`flex-1 bg-gradient-to-br ${currentTheme.colors.background} p-4 overflow-hidden`}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
           <div className="h-full w-full max-w-2xl mx-auto">
-            {renderPage(allPages[currentPage], currentPage)}
+            {renderPage(allPages[currentPage], currentPage + 1)}
           </div>
         </div>
 
@@ -296,7 +329,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
             className="text-xs md:text-sm"
           >
             <span className="md:hidden">◀</span>
-            <span className="hidden md:inline">Previous</span>
+            <span className="hidden md:inline">◀ Previous</span>
           </Button>
           <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4">
             <span className="text-xs md:text-sm text-gray-600">
@@ -307,7 +340,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
                 <button
                   key={i}
                   onClick={() => setCurrentPage(i)}
-                  className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-colors ${currentPage === i ? "bg-purple-500" : "bg-gray-300"
+                  className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-colors ${i === currentPage ? "bg-purple-500" : "bg-gray-300"
                     }`}
                 />
               ))}
@@ -321,7 +354,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
             className="text-xs md:text-sm"
           >
             <span className="md:hidden">▶</span>
-            <span className="hidden md:inline">Next</span>
+            <span className="hidden md:inline">Next ▶</span>
           </Button>
         </div>
       </div>
@@ -332,7 +365,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
           className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[60] p-4"
           onClick={() => setImagePopup(null)}
         >
-          <div className="relative max-w-5xl max-h-[90vh] w-full flex items-center justify-center">
+          <div className="relative max-w-5xl max-h-[90vh] w-full h-full flex items-center justify-center">
             <img
               src={
                 imagePopup.startsWith("http")
@@ -340,7 +373,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
                   : `http://localhost:8000${imagePopup}`
               }
               alt="Story Image"
-              className="w-full max-h-full object-contain rounded-lg"
+              className="max-w-full max-h-full object-contain rounded-lg"
               onClick={(e) => e.stopPropagation()}
             />
             <button
