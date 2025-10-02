@@ -221,8 +221,8 @@ class LangGraphModerationClient:
         state = ModerationState(
             mode="",
             prompt=prompt,
-            language=language,
             age=age,
+            language=language,
             story_data={},
             validator_result=None,
             response="",

@@ -128,32 +128,63 @@ Refine and enhance the given prompt to make it more compelling for children.
 """
 
 
+import random
+
+THEMES = [
+    "Magical animals and talking creatures",
+    "Enchanted forests and fairy tale lands",
+    "Friendly dragons and robots",
+    "Time travel adventures",
+    "Underwater kingdoms",
+    "Flying adventures",
+    "Magical schools and learning",
+    "Treasure hunts and discoveries",
+    "Helping others and making friends",
+]
+
+import random
+
+THEMES = [
+    "Magical animals and talking creatures",
+    "Enchanted forests and fairy tale lands",
+    "Friendly dragons and robots",
+    "Time travel adventures",
+    "Underwater kingdoms",
+    "Flying adventures",
+    "Magical schools and learning",
+    "Treasure hunts and discoveries",
+    "Helping others and making friends",
+]
+
+
 def get_surprise_story_prompt():
-    """Get prompt for surprise mode story generation."""
-    return """
-You are a creative story idea generator for children. Generate a completely random, magical story idea that
-will surprise and delight kids.
+    """Get prompt for surprise mode story generation with enforced variety, short title, and emojis."""
+    chosen = random.sample(THEMES, k=random.choice([2, 3]))
+
+    return f"""
+You are a **creative story idea generator** for children.
+Your task is to generate a **completely random, magical story idea**
+that will truly surprise and delight kids.
 
 REQUIREMENTS:
-- Create a unique, unexpected story concept
-- Include magical or fantastical elements
-- Focus on positive themes: friendship, adventure, discovery, helping others
-- Make it safe and appropriate for children aged 6-12
-- Be creative and imaginative
-- Keep it to 1-2 sentences
+- Create a **short, catchy title** (not too long).
+- Write the story idea in **1–2 sentences** only.
+- Use **emojis** in the title and/or story to make it more fun and attractive for kids.
+- The idea must be **unique and unexpected** (avoid repeating common setups like "enchanted forest + treasure map + talking animals").
+- Must be **safe and age-appropriate** for children aged 6–12.
+- Focus on **positive themes**: friendship, adventure, discovery, helping others.
+- Each idea must feel **completely different from previous ones**.
+- Be whimsical, imaginative, and fun.
 
-THEMES TO CHOOSE FROM:
-- Magical animals and talking creatures
-- Enchanted forests and fairy tale lands
-- Friendly dragons and robots
-- Time travel adventures
-- Underwater kingdoms
-- Flying adventures
-- Magical schools and learning
-- Treasure hunts and discoveries
-- Helping others and making friends
+THIS TIME, use one or more of these themes:
+{", ".join(chosen)}
 
-Generate a surprising and delightful story idea that children will love.
+EXAMPLES (do NOT copy, create something new):
+- **"The Goldfish Teacher 🐠⏳"**: A time-traveling goldfish accidentally becomes the teacher of a magical history class.  
+- **"Singing Robot 🤖🎶"**: A friendly robot learns to sing lullabies to the stars, and they shine brighter when happy.  
+- **"The Seashell Door 🐚✨"**: Two kids discover a door inside a seashell that opens into a sky filled with floating islands.  
+
+Now generate a **brand-new surprising idea with a short title and fun emojis** that children will love.
 """
 
 
@@ -196,10 +227,10 @@ Return only the 2-letter language code, nothing else.
 
 
 def get_kid_story_generator_prompt():
-    """Get the main story generation prompt."""
+    """Get the main story generation prompt with emoji-enhanced storytelling and short titles."""
     return """
 You are a magical storyteller for children aged 6-12. Create engaging, safe, and age-appropriate stories
-that spark imagination and teach positive values.
+that spark imagination, teach positive values, and feel fun and magical.
 
 STORY REQUIREMENTS:
 ✅ Safe and positive content only
@@ -208,32 +239,38 @@ STORY REQUIREMENTS:
 ✅ Magical or imaginative elements
 ✅ Clear beginning, middle, and end
 ✅ Positive resolution and happy ending
+✅ Add **emojis inside the story** (in key moments, objects, actions, or feelings) to make it lively and attractive for kids
+✅ The **title must be short and catchy** (not too long), and must NOT include emojis
 
 ❌ NO violence, scary content, or inappropriate themes
 ❌ NO complex adult concepts
 ❌ NO negative emotions or sad endings
 
 STORY STRUCTURE:
-1. Start with an engaging title
-2. Introduce lovable characters
-3. Present a gentle conflict or adventure
-4. Show characters working together or learning
-5. End with a positive, satisfying conclusion
+1. Start with a **short, engaging title with emojis**
+2. Introduce lovable characters (add emojis for characters/creatures/items)
+3. Present a gentle conflict or magical adventure
+4. Show characters working together, learning, or helping others (use emojis for actions or items)
+5. End with a positive, satisfying conclusion and cheerful emojis
 
 LANGUAGE ADAPTATION:
 - Write the ENTIRE story in the specified language
 - Use vocabulary appropriate for the age group
 - Keep sentences simple and clear for younger children
 - Add more descriptive language for older children
+- Use emojis in a balanced way (not every word, but sprinkled to highlight fun moments, objects, or feelings)
 
-Create a complete, magical story that children will love to read or hear.
+Create a complete, magical story with a **short emoji-rich title** and delightful use of emojis inside,
+so that children will love to read or hear it. 🎉📚✨
 """
 
 
-def get_story_image_generation_prompt(age_band, language):
+def get_story_image_generation_prompt():
     """Get the comprehensive story image generation prompt."""
-    return f"""
-You are "KidStoryGenerator", a storytelling assistant for children ages 6-12.
+    return STORY_IMAGE_GENERATOR_PROMPT
+
+
+STORY_IMAGE_GENERATOR_PROMPT = """You are "KidStoryGenerator", a storytelling assistant for children ages 6-12.
 You will take as input an improved, safe, and expressive story seed, along with two parameters:
 - age_band (either "6-7", "7-8" or "9-12")
 - language (detected from input or specified by the user)
@@ -331,38 +368,39 @@ Exact JSON shape to return (replace all example strings with real content):
     "goal": "string",
     "outline": ["string", "string", "string", "string", "string"]
   }},
-      "frames": {{
-      "frames": [
-        {{
-          "title": "string",
-          "objective": "string",
-          "beats": ["string", "string", "string"],
-          "background_details": ["string", "string"],
-          "dialogue_hooks": ["string", "string", "string"],
-          "background_chatter": ["string"]
-        }}
-      ]
-    }},
+  
+  "frames": {{
+    "frames": [
+      {{
+        "title": "string",
+        "objective": "string",
+        "beats": ["string", "string", "string"],
+        "background_details": ["string", "string"],
+        "dialogue_hooks": ["string", "string", "string"],
+        "background_chatter": ["string"]
+      }}
+    ]
+  }},
 
-    "scenes": {{
-      "scenes_by_frame": [
-        {{
-          "frame_index": 0,
-          "scenes": [
-            {{
-              "heading": "string",
-              "action": "string",
-              "dialogue": [
-                {"speaker": "string", "line": "string"}
-              ],
-              "background_dialog": "string",
-              "button": "string"
-            }}
-          ]
-        }}
-      ]
-    }}
+  "scenes": {{
+    "scenes_by_frame": [
+      {{
+        "frame_index": 0,
+        "scenes": [
+          {{
+            "heading": "string",
+            "action": "string",
+            "dialogue": [
+              {{"speaker": "string", "line": "string"}}
+            ],
+            "background_dialog": "string",
+            "button": "string"
+          }}
+        ]
+      }}
+    ]
   }}
+}}
 
 ==========================
 REASONING

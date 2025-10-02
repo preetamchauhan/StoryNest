@@ -610,8 +610,9 @@ class KidStoryGeneratorNode:
                     continue  # Skip the closing tag chunk
 
                 # Only send chunks outside of reasoning
-                if not inside_reasoning and chunk_content.strip():
-                    message_bus.publish_sync("story_chunk", chunk_content.strip())
+                if not inside_reasoning and chunk_content:
+                    if not chunk_content.isspace():
+                        message_bus.publish_sync("story_chunk", chunk_content)
 
             # If no chunks received, fallback to normal invoke
             if not chunks_received:

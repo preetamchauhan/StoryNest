@@ -284,9 +284,9 @@ def init_db():
                         "age": 8,
                         "audio_url": "",
                         "audio_data": b"",
-                        "frames_data": {},
-                        "image_paths": [],
-                        "image_data": "{}",
+                        "frames_data": "",
+                        "image_paths": "",
+                        "image_data": "",
                         "embedding": [0.0] * 30,
                         "created_at": datetime.now(),
                     }
@@ -568,6 +568,7 @@ async def generate_images(
 
         # Create client and call generate_story_images method
         client = LangGraphModerationClient()
+
         result_state = client.generate_story_images(
             prompt=request.prompt, age=request.age, language=request.language
         )
@@ -587,62 +588,209 @@ async def generate_images(
         return ImageResponse(success=False, error=str(e))
 
 
-@app.post("/api/generate-audio", response_model=AudioResponse)
-async def generate_audio(
-    request: AudioRequest, user_data: dict = Depends(verify_jwt_token)
-):
-    """Generate audio and save to temp folder for story linking."""
+# -------------------------------
+# Background Music Selection
+# -------------------------------
+def select_background_music(story_text: str) -> str:
+    """Select appropriate background music based on story content."""
+    story_lower = story_text.lower()
+
+    # Theme detection keywords
+    if any(word in story_lower for word in ['adventure', 'journey', 'explore', 'quest', 'brave']):
+        return 'adventure'
+    elif any(word in story_lower for word in ['magic', 'fairy', 'wizard', 'enchant', 'spell']):
+        return 'magical'
+    elif any(word in story_lower for word in ['friend', 'help', 'kind', 'love', 'care']):
+        return 'gentle'
+    else:
+        return 'gentle'  # Default
+
+
+# -------------------------------
+# Background Music Generator
+# -------------------------------
+def create_background_music(duration_seconds: float, theme: str) -> str:
+    """Generate simple background music using numpy and scipy."""
     try:
-        import pyttsx3
-        import tempfile
+        import numpy as np
+        import os, time
+        from scipy.io import wavfile
+
+        sample_rate = 22050
+        t = np.linspace(0, duration_seconds, int(sample_rate * duration_seconds))
+
+        # Theme-based music generation
+        if theme == 'adventure':
+            # Upbeat rhythm with major chords
+            music = (
+                np.sin(2 * np.pi * 261.63 * t) * 0.3 +  # C4
+                np.sin(2 * np.pi * 329.63 * t) * 0.2 +  # E4
+                np.sin(2 * np.pi * 392.00 * t) * 0.2    # G4
+            )
+        elif theme == 'magical':
+            # Ethereal tones with reverb-like effect
+            music = (
+                np.sin(2 * np.pi * 293.66 * t) * 0.3 +  # D4
+                np.sin(2 * np.pi * 369.99 * t) * 0.2 +  # F#4
+                np.sin(2 * np.pi * 440.00 * t) * 0.2    # A4
+            )
+        else:  # gentle
+            # Soft, calming tones
+            music = (
+                np.sin(2 * np.pi * 261.63 * t) * 0.25 +  # C4
+                np.sin(2 * np.pi * 311.13 * t) * 0.2 +   # D#4
+                np.sin(2 * np.pi * 392.00 * t) * 0.15    # G4
+            )
+
+        # Add gentle fade in/out
+        fade_samples = int(0.5 * sample_rate)  # 0.5 second fade
+        music[:fade_samples] *= np.linspace(0, 1, fade_samples)
+        music[-fade_samples:] *= np.linspace(1, 0, fade_samples)
+
+        # Save background music
+        music_path = os.path.join("story_outputs", f"bg_music_{theme}_{int(time.time())}.wav")
+        wavfile.write(music_path, sample_rate, (music * 32767).astype(np.int16))
+
+        return music_path
+    except ImportError:
+        return None
+
+
+@app.post("/api/generate-audio", response_model=AudioResponse)
+async def generate_audio(request: AudioRequest, user_data: dict = Depends(verify_jwt_token)):
+    """Generate multilingual audio with female voice and background music."""
+    try:
         import time
+        import os
 
-        print(
-            f"🔊 Starting offline TTS generation for user {user_data['username']} - language: {request.language}"
-        )
-        print(f"📝 Text length: {len(request.text)} characters")
+        print(f"🎤 Starting TTS generation for user {user_data['username']} - language: {request.language}")
+        print(f"📄 Text length: {len(request.text)} characters")
 
-        # Use pyttsx3 (offline TTS)
-        engine = pyttsx3.init()
-
-        # Configure for kids
-        engine.setProperty("rate", 120)  # Slower speech for children
-        engine.setProperty("volume", 0.8)
-
-        # Try to set a female voice if available
-        voices = engine.getProperty("voices")
-        for voice in voices:
-            if "female" in voice.name.lower() or "woman" in voice.name.lower():
-                engine.setProperty("voice", voice.id)
-                break
-
-        # Generate audio to story_outputs folder with user context
         os.makedirs("story_outputs", exist_ok=True)
-        audio_filename = (
-            f"{user_data['user_id']}_{request.filename}_{int(time.time())}.mp3"
-        )
-        audio_path = os.path.join("story_outputs", audio_filename)
 
-        engine.save_to_file(request.text, audio_path)
-        engine.runAndWait()
+        # -------------------------------
+        # Try OpenAI TTS first
+        # -------------------------------
+        try:
+            from openai import OpenAI
+            from config import OPENAI_API_KEY
 
-        print(f"✅ Audio generated and saved to: {audio_path}")
+            client = OpenAI(api_key=OPENAI_API_KEY)
 
-        return AudioResponse(
-            success=True,
-            message="Audio generated and saved successfully",
-            audio_path=f"/story-audio-temp/{audio_filename}",
-        )
+            response = client.audio.speech.create(
+                model="tts-1",
+                voice="nova",  # Female voice
+                input=request.text,
+                response_format="wav"
+            )
+
+            voice_filename = f"voice_{user_data['user_id']}_{int(time.time())}.wav"
+            voice_path = os.path.join("story_outputs", voice_filename)
+
+            with open(voice_path, "wb") as f:
+                f.write(response.content)
+
+            print(f"✅ OpenAI TTS audio generated: {voice_path}")
+
+        except Exception as openai_error:
+            print(f"⚠ OpenAI TTS failed: {openai_error}, using pyttsx3")
+
+            # -------------------------------
+            # Fallback to pyttsx3
+            # -------------------------------
+            import pyttsx3
+
+            engine = pyttsx3.init()
+            engine.setProperty('rate', 110)
+            engine.setProperty('volume', 0.9)
+
+            voices = engine.getProperty('voices')
+            if voices:
+                for voice in voices:
+                    if any(kw in voice.name.lower() for kw in ['female', 'woman', 'zira']):
+                        engine.setProperty('voice', voice.id)
+                        break
+
+            voice_filename = f"voice_{user_data['user_id']}_{int(time.time())}.wav"
+            voice_path = os.path.join("story_outputs", voice_filename)
+
+            engine.save_to_file(request.text, voice_path)
+            engine.runAndWait()
+
+        # -------------------------------
+        # Mix with Background Music
+        # -------------------------------
+        try:
+            from pydub import AudioSegment
+
+            # Load voice audio
+            voice_audio = AudioSegment.from_wav(voice_path)
+            voice_duration = len(voice_audio) / 1000.0  # Convert to seconds
+
+            # Select and create background music
+            music_theme = select_background_music(request.text)
+            print(f"🎶 Selected music theme: {music_theme}")
+
+            music_path = create_background_music(voice_duration, music_theme)
+
+            if music_path and os.path.exists(music_path):
+                # Load and mix
+                music_audio = AudioSegment.from_wav(music_path)
+
+                # Reduce music volume to 15% and mix
+                background_music = music_audio - 18  # Reduce by 18dB (~15% volume)
+                mixed_audio = voice_audio.overlay(background_music)
+
+                # Save final mixed audio
+                final_filename = f"{user_data['user_id']}_{request.filename}_{int(time.time())}_mixed.wav"
+                final_path = os.path.join("story_outputs", final_filename)
+
+                mixed_audio.export(final_path, format="wav")
+
+                # Cleanup temp files
+                try:
+                    os.remove(voice_path)
+                    os.remove(music_path)
+                except:
+                    pass
+
+                print(f"✅ Audio with background music generated: {final_path}")
+                return AudioResponse(
+                    success=True,
+                    message=f"Audio with {music_theme} background music generated in {request.language}",
+                    audio_path=f"/story-audio-temp/{final_filename}"
+                )
+            else:
+                # Fallback to voice-only
+                print("⚠ Background music generation failed, using voice-only")
+                return AudioResponse(
+                    success=True,
+                    message=f"Audio generated in {request.language} (voice-only)",
+                    audio_path=f"/story-audio-temp/{voice_filename}"
+                )
+
+        except ImportError:
+            print("⚠ pydub not available, using voice-only audio")
+            return AudioResponse(
+                success=True,
+                message=f"Audio generated in {request.language} (voice-only)",
+                audio_path=f"/story-audio-temp/{voice_filename}"
+            )
 
     except ImportError as e:
         print(f"❌ TTS Import Error: {str(e)}")
         return AudioResponse(
-            success=False, error="TTS library not installed: " + str(e)
+            success=False,
+            error=f"TTS library not installed: {str(e)}"
         )
 
     except Exception as e:
         print(f"❌ TTS Generation Error: {str(e)}")
-        return AudioResponse(success=False, error="Failed to generate audio: " + str(e))
+        return AudioResponse(
+            success=False,
+            error=f"Failed to generate audio: {str(e)}"
+        )
+
 
 
 @app.post("/api/save-story", response_model=StoriesResponse)
@@ -793,10 +941,7 @@ async def get_stories(
 
         # Filter by user and exclude "Generated Audio" entries
         if "user_id" in df.columns:
-            df = df[
-                df["user_id"]
-                == user_data["user_id"] & (df["title"] != "Generated Audio")
-            ]
+            df = df[(df["user_id"] == user_data["user_id"]) & (df["title"] != "Generated Audio")]
         else:
             # Fallback: show all stories if no user_id column
             df = df[df["title"] != "Generated Audio"]
@@ -829,21 +974,9 @@ async def get_stories(
                 "language": row["language"],
                 "age": row["age"],
                 "audioUrl": audio_url,
-                "framesData": (
-                    json.loads(row["frames_data"])
-                    if pd.notna(row["frames_data"])
-                    else None
-                ),
-                "imagePaths": (
-                    json.loads(row["image_paths"])
-                    if pd.notna(row["image_paths"])
-                    else None
-                ),
-                "createdAt": (
-                    row["created_at"].isoformat()
-                    if pd.notna(row["created_at"])
-                    else None
-                ),
+                "framesData": json.loads(row["frames_data"]) if pd.notna(row["frames_data"]) else None,
+                "imagePaths": json.loads(row["image_paths"]) if pd.notna(row["image_paths"]) else None,
+                "createdAt": row["created_at"].isoformat() if pd.notna(row["created_at"]) else None
             }
 
             stories.append(story)

@@ -236,7 +236,7 @@ const MyStoriesPage: React.FC = () => {
           </div>
         ) : savedStories.length === 0 ? (
           <div className="text-center py-16">
-            <div className="text-8xl mb-6">📚</div>s
+            <div className="text-8xl mb-6">📚</div>
             <h2 className="text-2xl font-semibold text-gray-600 dark:text-gray-400 mb-4">No stories yet</h2>
             <p className="text-gray-500 dark:text-gray-400 mb-6">Create your first story to see it here!</p>
             <button

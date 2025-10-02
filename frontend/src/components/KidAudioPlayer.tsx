@@ -27,7 +27,7 @@ const KidAudioPlayer: React.FC<KidAudioPlayerProps> = ({ audioUrl, storyText, on
       // Ensure we use the full URL for saved stories
       const fullAudioUrl = currentAudioUrl.startsWith('http')
         ? currentAudioUrl
-        : `http://localhost:8000/${currentAudioUrl}`;
+        : `http://localhost:8000${currentAudioUrl}`;
 
       if (audio.src !== fullAudioUrl) {
         audio.src = fullAudioUrl;
@@ -141,7 +141,7 @@ const KidAudioPlayer: React.FC<KidAudioPlayerProps> = ({ audioUrl, storyText, on
         // Ensure we use the full URL for saved stories
         const fullAudioUrl = currentAudioUrl.startsWith('http')
           ? currentAudioUrl
-          : `http://localhost:8000/${currentAudioUrl}`;
+          : `http://localhost:8000${currentAudioUrl}`;
 
         if (audioRef.current.src !== fullAudioUrl) {
           audioRef.current.src = fullAudioUrl;

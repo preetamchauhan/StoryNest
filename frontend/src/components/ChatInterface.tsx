@@ -132,7 +132,7 @@ p-3 sm:p-4 flex-shrink-0 rounded-t-2xl"
       bg-white/80 hover:bg-white border-purple-300 hover:border-purple-400 text-purple-600
       hover:text-purple-700 shadow-md"
           >
-            <span className="text-sm sm:text-base">×</span>
+            <span className="text-sm sm:text-base">←</span>
             <span className="hidden sm:inline">{modeInfo.backText}</span>
             <span className="sm:hidden">{modeInfo.icon}</span>
           </Button>
@@ -182,7 +182,7 @@ p-3 sm:p-4 flex-shrink-0 rounded-t-2xl"
                 <div
                   className="w-6 h-6 sm:w-8 sm:h-8 bg-red-500 rounded-full flex items-center 
         justify-center text-white text-xs sm:text-sm flex-shrink-0 mt-1 shadow-md"
-                ></div>
+                >⚠️</div>
                 <div
                   className="flex-1 bg-gradient-to-br from-red-100 to-pink-100 dark:from-red-900/30 
         dark:to-pink-900/30 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-lg border-2 border-red-200 
@@ -269,7 +269,7 @@ p-3 sm:p-4 flex-shrink-0 rounded-t-2xl"
                   className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-purple-500 to-pink-500 
         rounded-full flex items-center justify-center text-white text-sm sm:text-lg flex-shrink-0 
         mt-1 shadow-md"
-                ></div>
+                >🤖</div>
                 <div className="flex-1">
                   <div
                     className="bg-gradient-to-br from-yellow-100 via-orange-100 to-pink-100 

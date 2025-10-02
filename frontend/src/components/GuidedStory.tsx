@@ -309,7 +309,7 @@ const GuidedStory: React.FC = () => {
             </>
           ) : (
             <>
-           🚀 t('generateStory')
+           🚀 {t('generateStory')}
            </>
           )}
         </Button>
