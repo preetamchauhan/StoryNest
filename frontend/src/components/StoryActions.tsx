@@ -50,12 +50,21 @@ const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size
       console.log("Current user:", user);
       const token = localStorage.getItem('token');
       console.log("Auth token:", token);
+
+      const storyId = btoa(encodeURIComponent((storyTitle || 'My Story') + storyText.substring(0, 100)))
+      .replace(/[^a-zA-Z0-9]/g, '').substring(0, 20);
+
+      console.log('Generated story ID:', storyId);
+      console.log('Story title:', storyTitle);
+      console.log('Story text preview:', storyText.substring(0, 100));
+
       const response = await apiRequest('/api/generate-audio', {
         method: 'POST',
         body: JSON.stringify({
           text: storyText,
           language: currentLanguage.code,
-          filename: `story_${Date.now()}`
+          filename: `story_${Date.now()}`,
+          story_id:storyId
         })
       });
 
@@ -91,6 +100,10 @@ const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size
         /[^a-zA-Z0-9]/g,
         ''
       ).substring(0, 20);
+
+      console.log('Generated story ID:', storyId);
+      console.log('Story title:', storyTitle);
+      console.log('Story text preview:', storyText.substring(0, 100));
 
       const savedStory = {
         id: storyId,
@@ -140,12 +153,20 @@ const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size
     setShowLoadingProgress(true);
 
     try {
+      const storyId = btoa(encodeURIComponent((storyTitle || 'My Story') + storyText.substring(0, 100)))
+      .replace(/[^a-zA-Z0-9]/g, '').substring(0, 20);
+
+      console.log('Generated story ID:', storyId);
+      console.log('Story title:', storyTitle);
+      console.log('Story text preview:', storyText.substring(0, 100));
+
       const response = await apiRequest('/api/generate-images', {
         method: 'POST',
         body: JSON.stringify({
           prompt: originalPrompt || storyText,
           age,
-          language: currentLanguage.code
+          language: currentLanguage.code,
+          story_id: storyId
         })
       });
 
@@ -228,6 +249,7 @@ const StoryActions: React.FC<StoryActionsProps> = ({ storyTitle, storyText, size
           framesData={storyData.framesData}
           imagePaths={storyData.imagePaths}
           onClose={() => setShowStoryViewer(false)}
+          storyTitle={storyTitle}
         />
       )}
     </div>

@@ -566,57 +566,71 @@ async def generate_story(
 
 @app.post("/api/generate-images", response_model=ImageResponse)
 async def generate_images(
-    request: ImageRequest, 
-    user_data: dict = Depends(verify_jwt_token)
+    request: ImageRequest, user_data: dict = Depends(verify_jwt_token)
 ):
     """Generate story images or return existing ones from database."""
-
     try:
-        # Check if images already exist in database by searching prompt/text content
-        df = stories_table.to_pandas()
-        if not df.empty:
-            # Search for stories containing the prompt text
-            matching_stories = df[
-                (df["user_id"] == user_data["user_id"]) &
-                (df["text"].str.contains(request.prompt[:100], case=False, na=False))
-            ]
+        print(f"\n🚀 Starting image check for user ({user_data['username']})")
+        print(f"📜 Prompt length: {len(request.prompt)} characters")
+        print(f"🆔 Story ID provided: {request.story_id}")
 
-            if not matching_stories.empty:
-                story_row = matching_stories.iloc[0]
-                if pd.notna(story_row["frames_data"]) and pd.notna(story_row["image_data"]):
-                    frames_data = json.loads(story_row["frames_data"])
-                    image_paths = json.loads(story_row["image_paths"]) if pd.notna(story_row["image_paths"]) else []
-                    
-                    print(f"✅ Found existing images for story: {story_row['id']} (text match)")
-                    return ImageResponse(
-                        success=True,
-                        message="Retrieved existing story images from database",
-                        frames_data=frames_data,
-                        image_paths=image_paths,
-                    )
+        # # Check if images already exist in database
+        # df = stories_table.to_pandas()
+        # print(f"📊 Database has {len(df)} total stories")
 
-        # If story_id provided, use it for lookup
-        if request.story_id:
-            result = stories_table.search().where(
-                f"id = '{request.story_id}' AND user_id = '{user_data['user_id']}'"
-            ).limit(1).to_pandas()
+        # if not df.empty:
+        #     user_stories = df[df["user_id"] == user_data["user_id"]]
+        #     print(f"👤 User has {len(user_stories)} stories")
 
-            if not result.empty:
-                story_row = result.iloc[0]
-                if pd.notna(story_row["frames_data"]) and pd.notna(story_row["image_data"]):
-                    frames_data = json.loads(story_row["frames_data"])
-                    image_paths = json.loads(story_row["image_paths"]) if pd.notna(story_row["image_paths"]) else []
-                    
-                    print(f"✅ Found existing images for story: {story_row['id']} (by ID)")
-                    return ImageResponse(
-                        success=True,
-                        message="Retrieved existing story images from database",
-                        frames_data=frames_data,
-                        image_paths=image_paths,
-                    )
+        #     # If story_id provided, use it for lookup first (more specific)
+        #     if request.story_id:
+        #         print(f"🔎 Looking for story with ID: {request.story_id}")
+        #         # Use pandas filtering instead of LanceDB where clause
+        #         id_matches = user_stories[user_stories["id"] == request.story_id]
+        #         print(f"📌 ID search result: {len(id_matches)} matches")
+
+        #         if not id_matches.empty:
+        #             story_row = id_matches.iloc[0]
+        #             print(f"✅ Found story: {story_row['title'][:50]}...")
+        #             print(f"🖼️ Has frames_data: {pd.notna(story_row['frames_data'])}")
+        #             print(f"🖼️ Has image_data: {pd.notna(story_row['image_data']) if 'image_data' in story_row else 'None'}")
+
+        #             # Check if frames_data exists and has content (images are in frames_data)
+        #             if pd.notna(story_row["frames_data"]):
+        #                 try:
+        #                     frames_data = json.loads(story_row["frames_data"])
+        #                     has_images = (
+        #                         len(frames_data) > 0
+        #                         and any("image_path" in frame for frame in frames_data.values() if isinstance(frame, dict))
+        #                     )
+        #                     print(f"🖼️ Frames data has images: {has_images}")
+        #                 except Exception as e:
+        #                     has_images = False
+        #                     print(f"⚠️ Error parsing frames_data: {e}")
+        #             else:
+        #                 has_images = False
+
+        #             if has_images:
+        #                 image_paths = json.loads(story_row["image_paths"]) if pd.notna(story_row["image_paths"]) else []
+        #                 print(f"✅ Found existing images for story: {story_row['id']} (by ID)")
+        #                 print(f"🖼️ Returning {len(frames_data)} frames with {len(image_paths)} image paths")
+        #                 return ImageResponse(
+        #                     success=True,
+        #                     message="Retrieved existing story images from database",
+        #                     frames_data=frames_data,
+        #                     image_paths=image_paths,
+        #                 )
+        #             else:
+        #                 print("⚠️ Story found but no image data in frames")
+
+        #     # Skip slow text search – rely on story_id matching only
+        #     print("⚠️ No story_id provided or no match found by ID")
 
         # No existing images found, generate new ones
-        print(f"⚙️ Generating new images for prompt: {request.prompt[:50]}...")
+        print(f"🆕 No existing images found, generating new images for prompt: {request.prompt[:50]}...")
+
+        # --- image generation logic goes here ---
+
         
         from langgraph_client import LangGraphModerationClient
 
@@ -713,54 +727,57 @@ def create_background_music(duration_seconds: float, theme: str) -> str:
 @app.post("/api/generate-audio", response_model=AudioResponse)
 async def generate_audio(request: AudioRequest, user_data: dict = Depends(verify_jwt_token)):
     """Generate multilingual audio or return existing audio from database."""
-
     try:
-        import os
         import time
+        import os
 
-        print(f"🎙️ Starting audio check for user {user_data['username']} - language: {request.language}")
-        print(f"📝 Text length: {len(request.text)} characters")
+        print(f"\n🚀 Starting audio check for user {user_data['username']} - language: {request.language}")
+        print(f"📜 Text length: {len(request.text)} characters")
+        print(f"🆔 Story ID provided: {request.story_id}")
 
-        # Check if audio already exists in database by searching text content
-        df = stories_table.to_pandas()
-        if not df.empty:
-            # Search for exact text match first
-            exact_match = df[
-                (df["user_id"] == user_data["user_id"]) &
-                (df["text"] == request.text)
-            ]
+        # # Check if audio already exists in database by searching text content
+        # df = stories_table.to_pandas()
+        # print(f"📊 Database has {len(df)} total stories")
 
-            if not exact_match.empty:
-                story_row = exact_match.iloc[0]
-                if pd.notna(story_row["audio_data"]) and story_row["audio_data"] is not None and len(story_row["audio_data"]) > 0:
-                    audio_url = f"/story-audio/{story_row['id']}"
-                    print(f"✅ Found existing audio for story: {story_row['id']} (exact match)")
-                    return AudioResponse(
-                        success=True,
-                        message=f"Retrieved existing audio from database in {request.language}",
-                        audio_path=audio_url
-                    )
+        # user_stories = df[df["user_id"] == user_data["user_id"]]
+        # print(f"👤 User has {len(user_stories)} stories")
 
-        # If story_id provided, use it for lookup
-        if request.story_id:
-            result = stories_table.search().where(
-                f"id = '{request.story_id}' AND user_id = '{user_data['user_id']}'"
-            ).limit(1).to_pandas()
+        # # If story_id provided, use it for lookup first (more specific)
+        # if request.story_id:
+        #     print(f"🔎 Looking for story with ID: {request.story_id}")
+        #     # Use pandas filtering instead of LanceDB where clause
+        #     id_matches = user_stories[user_stories["id"] == request.story_id]
+        #     print(f"📌 ID search result: {len(id_matches)} matches")
 
-            if not result.empty:
-                story_row = result.iloc[0]
-                if pd.notna(story_row["audio_data"]) and story_row["audio_data"] is not None and len(story_row["audio_data"]) > 0:
-                    audio_url = f"/story-audio/{story_row['id']}"
-                    print(f"✅ Found existing audio for story: {story_row['id']} (by ID)")
-                    return AudioResponse(
-                        success=True,
-                        message=f"Retrieved existing audio from database in {request.language}",
-                        audio_path=audio_url
-                    )
+        #     if not id_matches.empty:
+        #         story_row = id_matches.iloc[0]
+        #         print(f"✅ Found story: {story_row['title'][:50]}...")
 
-        # No existing audio found, generate new audio
-        print(f"⚙️ Generating new TTS for user {user_data['username']} - language: {request.language}")
-        os.makedirs("story_outputs", exist_ok=True)
+        #         has_audio = (
+        #             pd.notna(story_row["audio_data"])
+        #             and story_row["audio_data"] is not None
+        #             and len(story_row["audio_data"]) > 0
+        #         )
+        #         print(f"🖼️ Has audio_data: {has_audio}")
+        #         print(f"🎵 Audio data length: {len(story_row['audio_data']) if has_audio else 0}")
+
+        #         if has_audio:
+        #             audio_url = f"/story-audio/{story_row['id']}"
+        #             print(f"✅ Found existing audio for story: {story_row['id']} (by ID)")
+        #             return AudioResponse(
+        #                 success=True,
+        #                 message=f"Retrieved existing audio from database in {request.language}",
+        #                 audio_path=audio_url,
+        #             )
+        #         else:
+        #             print("⚠️ Story found but no audio data")
+
+        # # Skip slow text search – rely on story_id matching only
+        # print("⚠️ No story_id provided or no match found by ID")
+
+        # # No existing audio found, generate new audio
+        # print(f"🆕 No existing audio found, generating new TTS for user {user_data['username']} - language: {request.language}")
+        # os.makedirs("story_outputs", exist_ok=True)
 
         # -------------------------------
         # Try OpenAI TTS first
