@@ -243,7 +243,7 @@ class ImageGenerator:
 
             # Submit tasks and gather results
             results = []
-            with ThreadPoolExecutor(max_workers=1) as executor:
+            with ThreadPoolExecutor(max_workers=5) as executor:
                 future_to_index = {
                     executor.submit(generate_single_image, i, frame): i
                     for i, frame in enumerate(frames_data)

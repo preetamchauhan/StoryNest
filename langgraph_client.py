@@ -245,7 +245,48 @@ class LangGraphModerationClient:
         if "session_frames" in result_state:
             print("\n=== Session Frames Dictionary ===")
             for frame_key, frame_data in result_state["session_frames"].items():
-                print(f"{frame_key}: {frame_data['title']} -> {frame_data['image_path']}")
+                # Safe accessors
+                def _get_title_from_fd(fd):
+                    """Return title string for fd which may be dict, tuple (i, dict), list, or None."""
+                    if fd is None:
+                        return "<no title>"
+                    # dict-like
+                    if isinstance(fd, dict):
+                        return fd.get("title") or "<no title>"
+                    # tuple-like (index, dict)
+                    if isinstance(fd, tuple) and len(fd) >= 2 and isinstance(fd[1], dict):
+                        return fd[1].get("title") or "<no title>"
+                    # list-like with dict first element
+                    if isinstance(fd, list) and len(fd) > 0 and isinstance(fd[0], dict):
+                        return fd[0].get("title") or "<no title>"
+                    # object with attribute or get()
+                    try:
+                        if hasattr(fd, "get"):
+                            return fd.get("title") or "<no title>"
+                        if hasattr(fd, "title"):
+                            return getattr(fd, "title") or "<no title>"
+                    except Exception:
+                        pass
+                    # fallback to string repr
+                    try:
+                        return str(fd)
+                    except Exception:
+                        return "<invalid frame_data>"
+
+                # frame_data may itself be a dict containing keys 'frame_data' and 'image_path'
+                fd = frame_data.get("frame_data") if isinstance(frame_data, dict) else frame_data
+                title = _get_title_from_fd(fd)
+
+                # safe image_path extraction
+                image_path = None
+                if isinstance(frame_data, dict):
+                    image_path = frame_data.get("image_path")
+                else:
+                    # try attribute access if it's an object
+                    image_path = getattr(frame_data, "image_path", None)
+
+                print(f"{frame_key}: {title} -> {image_path}")
             print("=== End Session Frames ===\n")
+
 
         return result_state

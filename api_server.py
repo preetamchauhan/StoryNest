@@ -850,7 +850,7 @@ async def save_story(
                     image_filename = (
                         image_path.split("/")[-1] if "/" in image_path else image_path
                     )
-                    temp_image_path = os.path.join("story_outputs", image_filename)
+                    temp_image_path = image_filename  # os.path.join("story_outputs", image_filename)
 
                     if os.path.exists(temp_image_path):
                         with open(temp_image_path, "rb") as f:
