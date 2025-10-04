@@ -397,6 +397,7 @@ class ImageRequest(BaseModel):
     prompt: str
     age: int
     language: str
+    story_id: Optional[str] = None
 
 
 class ImageResponse(BaseModel):
@@ -411,6 +412,7 @@ class AudioRequest(BaseModel):
     text: str
     language: str = "en"
     filename: str = "story_audio"
+    story_id: Optional[str] = None
 
 
 class AudioResponse(BaseModel):
@@ -564,10 +566,58 @@ async def generate_story(
 
 @app.post("/api/generate-images", response_model=ImageResponse)
 async def generate_images(
-    request: ImageRequest, user_data: dict = Depends(verify_jwt_token)
+    request: ImageRequest, 
+    user_data: dict = Depends(verify_jwt_token)
 ):
-    """Generate story images using GenerateStoryImageNode."""
+    """Generate story images or return existing ones from database."""
+
     try:
+        # Check if images already exist in database by searching prompt/text content
+        df = stories_table.to_pandas()
+        if not df.empty:
+            # Search for stories containing the prompt text
+            matching_stories = df[
+                (df["user_id"] == user_data["user_id"]) &
+                (df["text"].str.contains(request.prompt[:100], case=False, na=False))
+            ]
+
+            if not matching_stories.empty:
+                story_row = matching_stories.iloc[0]
+                if pd.notna(story_row["frames_data"]) and pd.notna(story_row["image_data"]):
+                    frames_data = json.loads(story_row["frames_data"])
+                    image_paths = json.loads(story_row["image_paths"]) if pd.notna(story_row["image_paths"]) else []
+                    
+                    print(f"✅ Found existing images for story: {story_row['id']} (text match)")
+                    return ImageResponse(
+                        success=True,
+                        message="Retrieved existing story images from database",
+                        frames_data=frames_data,
+                        image_paths=image_paths,
+                    )
+
+        # If story_id provided, use it for lookup
+        if request.story_id:
+            result = stories_table.search().where(
+                f"id = '{request.story_id}' AND user_id = '{user_data['user_id']}'"
+            ).limit(1).to_pandas()
+
+            if not result.empty:
+                story_row = result.iloc[0]
+                if pd.notna(story_row["frames_data"]) and pd.notna(story_row["image_data"]):
+                    frames_data = json.loads(story_row["frames_data"])
+                    image_paths = json.loads(story_row["image_paths"]) if pd.notna(story_row["image_paths"]) else []
+                    
+                    print(f"✅ Found existing images for story: {story_row['id']} (by ID)")
+                    return ImageResponse(
+                        success=True,
+                        message="Retrieved existing story images from database",
+                        frames_data=frames_data,
+                        image_paths=image_paths,
+                    )
+
+        # No existing images found, generate new ones
+        print(f"⚙️ Generating new images for prompt: {request.prompt[:50]}...")
+        
         from langgraph_client import LangGraphModerationClient
 
         # Create client and call generate_story_images method
@@ -662,14 +712,54 @@ def create_background_music(duration_seconds: float, theme: str) -> str:
 
 @app.post("/api/generate-audio", response_model=AudioResponse)
 async def generate_audio(request: AudioRequest, user_data: dict = Depends(verify_jwt_token)):
-    """Generate multilingual audio with female voice and background music."""
+    """Generate multilingual audio or return existing audio from database."""
+
     try:
-        import time
         import os
+        import time
 
-        print(f"🎤 Starting TTS generation for user {user_data['username']} - language: {request.language}")
-        print(f"📄 Text length: {len(request.text)} characters")
+        print(f"🎙️ Starting audio check for user {user_data['username']} - language: {request.language}")
+        print(f"📝 Text length: {len(request.text)} characters")
 
+        # Check if audio already exists in database by searching text content
+        df = stories_table.to_pandas()
+        if not df.empty:
+            # Search for exact text match first
+            exact_match = df[
+                (df["user_id"] == user_data["user_id"]) &
+                (df["text"] == request.text)
+            ]
+
+            if not exact_match.empty:
+                story_row = exact_match.iloc[0]
+                if pd.notna(story_row["audio_data"]) and story_row["audio_data"] is not None and len(story_row["audio_data"]) > 0:
+                    audio_url = f"/story-audio/{story_row['id']}"
+                    print(f"✅ Found existing audio for story: {story_row['id']} (exact match)")
+                    return AudioResponse(
+                        success=True,
+                        message=f"Retrieved existing audio from database in {request.language}",
+                        audio_path=audio_url
+                    )
+
+        # If story_id provided, use it for lookup
+        if request.story_id:
+            result = stories_table.search().where(
+                f"id = '{request.story_id}' AND user_id = '{user_data['user_id']}'"
+            ).limit(1).to_pandas()
+
+            if not result.empty:
+                story_row = result.iloc[0]
+                if pd.notna(story_row["audio_data"]) and story_row["audio_data"] is not None and len(story_row["audio_data"]) > 0:
+                    audio_url = f"/story-audio/{story_row['id']}"
+                    print(f"✅ Found existing audio for story: {story_row['id']} (by ID)")
+                    return AudioResponse(
+                        success=True,
+                        message=f"Retrieved existing audio from database in {request.language}",
+                        audio_path=audio_url
+                    )
+
+        # No existing audio found, generate new audio
+        print(f"⚙️ Generating new TTS for user {user_data['username']} - language: {request.language}")
         os.makedirs("story_outputs", exist_ok=True)
 
         # -------------------------------
@@ -970,6 +1060,10 @@ async def get_stories(
             ):
                 audio_url = f"/story-audio/{row['id']}"
                 print(f"⚡ Fixed missing audio_url for story {row['id']}")
+                
+           
+            frames_data = json.loads(row["frames_data"]) if pd.notna(row["frames_data"]) else None
+            image_paths = json.loads(row["image_paths"]) if pd.notna(row["image_paths"]) else []
 
             story = {
                 "id": row["id"],
@@ -978,8 +1072,8 @@ async def get_stories(
                 "language": row["language"],
                 "age": row["age"],
                 "audioUrl": audio_url,
-                "framesData": json.loads(row["frames_data"]) if pd.notna(row["frames_data"]) else None,
-                "imagePaths": json.loads(row["image_paths"]) if pd.notna(row["image_paths"]) else None,
+                "framesData": frames_data,
+                "imagePaths": image_paths,
                 "createdAt": row["created_at"].isoformat() if pd.notna(row["created_at"]) else None
             }
 
@@ -1033,6 +1127,10 @@ async def search_stories(
             ):
                 audio_url = f"/story-audio/{row['id']}"
 
+            has_images = pd.notna(row["image_data"]) and row["image_data"] is not None and row["image_data"] != ""
+            frames_data = json.loads(row["frames_data"]) if pd.notna(row["frames_data"]) else None
+            image_paths = json.loads(row["image_paths"]) if pd.notna(row["image_paths"]) else []
+            
             story = {
                 "id": row["id"],
                 "title": row["title"],
@@ -1040,16 +1138,8 @@ async def search_stories(
                 "language": row["language"],
                 "age": row["age"],
                 "audioUrl": audio_url,
-                "framesData": (
-                    json.loads(row["frames_data"])
-                    if pd.notna(row["frames_data"])
-                    else None
-                ),
-                "imagePaths": (
-                    json.loads(row["image_paths"])
-                    if pd.notna(row["image_paths"])
-                    else None
-                ),
+                "framesData": frames_data,
+                "imagePaths": image_paths,
                 "createdAt": (
                     row["created_at"].isoformat()
                     if pd.notna(row["created_at"])

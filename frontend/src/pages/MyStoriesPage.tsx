@@ -305,7 +305,7 @@ const MyStoriesPage: React.FC = () => {
                   )}
 
                   {/* Show Read button only if images exist */}
-                  {story.framesData && story.imagePaths && story.imagePaths.length > 0 && (
+                  {story.framesData && (
                     <button
                       onClick={() => openStoryViewer(story)}
                       className="flex-1 bg-purple-500 hover:bg-purple-600 text-white text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-3 rounded-lg transition-all font-medium"
