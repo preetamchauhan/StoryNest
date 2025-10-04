@@ -367,6 +367,10 @@ def generate_hash_embedding(text: str):
 # Initialize LanceDB on startup
 init_db()
 
+# Create directories if they don't exist
+os.makedirs("images", exist_ok=True)
+os.makedirs("story_outputs", exist_ok=True)
+
 # Mount static files for fallback images only
 app.mount("/images", StaticFiles(directory="images"), name="images")
 app.mount("/story-images", StaticFiles(directory="story_outputs"), name="story_images")
@@ -570,7 +574,7 @@ async def generate_images(
         client = LangGraphModerationClient()
 
         result_state = client.generate_story_images(
-            prompt=request.prompt, age=request.age, language=request.language
+            prompt=request.prompt, age=request.age, language=request.language, user_id=user_data["user_id"]
         )
 
         # Extract frames data and image paths from result

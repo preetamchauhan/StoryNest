@@ -20,8 +20,11 @@ from config import OPENAI_API_KEY
 class ImageGenerator:
     """Handles both real and mock image generation for story frames."""
 
-    def __init__(self, use_mock: bool = True):
+    def __init__(self, use_mock: bool = True, user_id: str = "user", timestamp: int = None):
+        import time
         self.use_mock = use_mock
+        self.user_id = user_id
+        self.timestamp = timestamp or int(time.time())
         self.images_dir = os.path.join(os.path.dirname(__file__), "images")
 
     def generate_images_for_frames(
@@ -33,28 +36,96 @@ class ImageGenerator:
         else:
             return self._generate_real_images(frames_data, bible)
 
-    def _generate_mock_images(
-        self, frames_data: List[Dict[str, Any]], bible: Dict[str, Any]
+    def _generate_mock_images(self, frames_data: List[Dict[str, Any]], bible: Dict[str, Any]
     ) -> List[str]:
-        """Generate frame-specific images from existing images folder."""
-        available_images = glob.glob(os.path.join(self.images_dir, "*.png"))
-        available_images.extend(glob.glob(os.path.join(self.images_dir, "*.jpg")))
+        """Generate frame-specific images from existing images folder with parallel processing."""
+        try:
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+            import shutil
+            import os
 
-        selected_images = []
-        for i, frame in enumerate(frames_data):
-            frame_title = (
-                frame.get("title", "Story")
-                .replace(" ", "_")
-                .replace(":", "")
-                .replace("!", "")
-                .replace("?", "")
-            )
-            frame_image_path = self._create_frame_image(
-                frame, available_images, i, frame_title
-            )
-            selected_images.append(frame_image_path)
+            available_images = glob.glob(os.path.join(self.images_dir, "*.png"))
+            available_images.extend(glob.glob(os.path.join(self.images_dir, "*.jpg")))
 
-        return selected_images
+            if not available_images:
+                print("⚠️ No images found in images folder, creating placeholders")
+                return [self._create_placeholder_image(f"Frame {i+1}") for i in range(len(frames_data))]
+
+            def _ensure_output_dir():
+                os.makedirs("story_outputs", exist_ok=True)
+
+            def generate_single_mock_image(i: int, frame: Dict[str, Any]):
+                try:
+                    # Select base image
+                    base_image = self._select_base_image_for_frame(frame, available_images, i)
+
+                    # Create filename
+                    frame_title = (
+                        frame.get("title", "Story")
+                        .replace(":", "")
+                        .replace("/", "")
+                        .replace("\\", "")
+                        .replace("?", "")
+                    )
+
+                    base_filename = os.path.basename(base_image)
+                    file_extension = os.path.splitext(base_filename)[1]
+                    new_filename = f"{self.user_id}_{self.timestamp}_frame_{i+1}_{frame_title}{file_extension}"
+
+                    # Copy to story_outputs
+                    _ensure_output_dir()
+                    new_image_path = os.path.join("story_outputs", new_filename)
+                    shutil.copy2(base_image, new_image_path)
+
+                    # Return URL for compatibility with existing code
+                    filename = os.path.basename(new_image_path)
+                    return (i, f"http://localhost:8000/story-images/{filename}")
+
+                except Exception as e:
+                    print(f"⚠️ Failed to generate mock image for frame {i+1}: {e}")
+                    fallback_image = self._create_placeholder_image(f"Frame {i+1}")
+                    return (i, fallback_image)
+
+            # Submit tasks and gather results
+            results = []
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                future_to_index = {
+                    executor.submit(generate_single_mock_image, i, frame): i
+                    for i, frame in enumerate(frames_data)
+                }
+
+                for future in as_completed(future_to_index, timeout=60):
+                    i = future_to_index[future]
+                    try:
+                        result = future.result(timeout=10)
+                        results.append(result)
+                    except Exception as e:
+                        print(f"⚠️ Timeout/error for mock frame {i+1}: {e}")
+                        results.append((i, self._create_placeholder_image(f"Frame {i+1}")))
+
+            # Ensure every frame has a result
+            completed_indices = {idx for idx, _ in results}
+            for idx in range(len(frames_data)):
+                if idx not in completed_indices:
+                    print(f"⚠️ No result for mock frame {idx+1}, adding placeholder.")
+                    results.append((idx, self._create_placeholder_image(f"Frame {idx+1}")))
+
+            results.sort(key=lambda x: x[0])
+            return [res[1] for res in results]
+
+        except ImportError:
+            print("⚠️ Required libraries not available. Using fallback mock generation.")
+            # Fallback to simple sequential processing
+            selected_images = []
+            for i, frame in enumerate(frames_data):
+                try:
+                    frame_image_path = self._create_frame_image(frame, available_images, i, "Story")
+                    selected_images.append(frame_image_path)
+                except Exception as e:
+                    print(f"⚠️ Fallback failed for frame {i+1}: {e}")
+                    selected_images.append(self._create_placeholder_image(f"Frame {i+1}"))
+            return selected_images
+
 
     def _create_frame_image(
         self,
@@ -74,7 +145,7 @@ class ImageGenerator:
         # Create new filename with frame info
         base_filename = os.path.basename(base_image)
         file_extension = os.path.splitext(base_filename)[1]
-        new_filename = f"frame_{frame_index+1}_{frame_title}{file_extension}"
+        new_filename = f"{self.user_id}_{self.timestamp}_frame_{frame_index+1}_{frame_title}{file_extension}"
 
         # Copy to story_outputs directory with new name
         output_dir = os.path.join(os.path.dirname(__file__), "story_outputs")
@@ -84,7 +155,8 @@ class ImageGenerator:
         shutil.copy2(base_image, new_image_path)
 
         # Return API URL
-        return f"http://localhost:8000/story-images/{new_filename}"
+        filename = os.path.basename(new_image_path)
+        return f"http://localhost:8000/story-images/{filename}"
 
 
     def _select_base_image_for_frame(
@@ -212,8 +284,9 @@ class ImageGenerator:
                         # Prefer URL if valid
                         if image_url:
                             try:
-                                image_path = _download_from_url(image_url, f"generated_frame_{i+1}")
-                                return (i, image_path)
+                                image_path = _download_from_url(image_url, f"{self.user_id}_{self.timestamp}_generated_frame_{i+1}")
+                                filename = os.path.basename(image_path)
+                                return (i, f"http://localhost:8000/story-images/{filename}")
                             except Exception as e:
                                 # Log and fall through to try b64 or retry
                                 print(f"Attempt {attempt}: failed to download URL for frame {i+1}: {e}")
@@ -222,8 +295,9 @@ class ImageGenerator:
                         if image_b64:
                             try:
                                 img_bytes = base64.b64decode(image_b64)
-                                image_path = _save_bytes_to_file(img_bytes, f"generated_frame_{i+1}")
-                                return (i, image_path)
+                                image_path = _save_bytes_to_file(img_bytes, f"{self.user_id}_{self.timestamp}_generated_frame_{i+1}")
+                                filename = os.path.basename(image_path)
+                                return (i, f"http://localhost:8000/story-images/{filename}")
                             except Exception as e:
                                 print(f"Attempt {attempt}: failed to decode b64 for frame {i+1}: {e}")
 
@@ -370,11 +444,12 @@ class ImageGenerator:
             output_dir = os.path.join(os.path.dirname(__file__), "story_outputs")
             os.makedirs(output_dir, exist_ok=True)
 
-            filename = f"placeholder_{text.replace(' ', '_')}.png"
+            filename = f"{self.user_id}_{self.timestamp}_placeholder_{text.replace(' ', '_')}.png"
             placeholder_path = os.path.join(output_dir, filename)
             img.save(placeholder_path)
 
             # Return API URL
+            filename = os.path.basename(placeholder_path)
             return f"http://localhost:8000/story-images/{filename}"
 
         except Exception as e:

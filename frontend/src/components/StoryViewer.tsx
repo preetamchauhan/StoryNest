@@ -216,17 +216,21 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
             >
               <img
                 src={
-                  page.imagePath.startsWith("http")
+                  page.imagePath.startsWith("http") || page.imagePath.startsWith("/")
+                    ? page.imagePath.startsWith("http")
                     ? page.imagePath
                     : `http://localhost:8000${page.imagePath}`
+                    : `http://localhost:8000/story-images/${page.imagePath}`
                 }
                 alt={page.title}
                 className="w-full h-full object-contain rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={() =>
                   setImagePopup(
-                    page.imagePath.startsWith("http")
+                    page.imagePath.startsWith("http") || page.imagepath.startsWith("/")
+                      ? page.imagePath.startsWith("http")
                       ? page.imagePath
                       : `http://localhost:8000${page.imagePath}`
+                      : `http://localhost:8000/story-images/${page.imagePath}`
                   )
                 }
                 onError={(e) => {
@@ -368,9 +372,11 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
           <div className="relative max-w-5xl max-h-[90vh] w-full h-full flex items-center justify-center">
             <img
               src={
-                imagePopup.startsWith("http")
+                imagePopup.startsWith("http") || imagePopup.startsWith("/")
+                  ? imagePopup.startsWith("http")
                   ? imagePopup
-                  : `http://localhost:8000${imagePopup}`
+                  : `http://localhost:8000/${imagePopup}`
+                  : `http://localhost:8000/story-images/${imagePopup}`
               }
               alt="Story Image"
               className="max-w-full max-h-full object-contain rounded-lg"

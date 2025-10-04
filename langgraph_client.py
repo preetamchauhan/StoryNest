@@ -59,6 +59,7 @@ class ModerationState(TypedDict):
     story_dict: dict
     session_frames: dict  # Session dictionary with frame data and images
     image_paths: list  # List of generated image paths
+    user_id: str  # User identifier
 
 
 class LangGraphModerationClient:
@@ -216,7 +217,7 @@ class LangGraphModerationClient:
             return "retry"
 
 
-    def generate_story_images(self, prompt: str, age: int, language: str) -> dict:
+    def generate_story_images(self, prompt: str, age: int, language: str, user_id: str = "api_user") -> dict:
         """Generate story images using session prompt directly without re-improvement."""
         state = ModerationState(
             mode="",
@@ -231,6 +232,7 @@ class LangGraphModerationClient:
             story={},
             session_frames={},
             image_paths=[],
+            user_id=user_id
         )
 
         # Use the session prompt directly without re-improvement
