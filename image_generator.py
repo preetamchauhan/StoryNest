@@ -350,47 +350,76 @@ class ImageGenerator:
             print("⚠️ Required libraries not installed. Falling back to mock images.")
             return self._generate_mock_images(frames_data, bible)
 
-
-
-
-
     def _create_image_prompt(self, frame: Dict[str, Any], bible: Dict[str, Any]) -> str:
-        """Create detailed prompt for image generation."""
+        """Create a detailed and style-controlled prompt for children's book illustration generation."""
         characters = bible.get("characters", [])
         setting = bible.get("setting", {})
 
-        # Build character descriptions
+        # === Build Character Descriptions ===
         char_descriptions = []
         for char in characters:
             traits = ", ".join(char.get("traits", []))
-            char_descriptions.append(f"{char.get('name', 'character')} ({char.get('role', 'friend')}, {traits})")
+            flaw = char.get("flaw", "")
+            desc = f"{char.get('name', 'character')} – a {char.get('role', 'friend')} who is {traits}"
+            if flaw:
+                desc += f" but {flaw}"
+            char_descriptions.append(desc)
 
-        # Build setting description
-        setting_desc = setting.get("time_place", "magical place")
-        sensory_details = ", ".join(setting.get("sensory", []))
+        # === Build Setting Description (fixed) ===
+        setting_desc = setting.get("time_place", "a magical land")
+        sensory_details = ", ".join(setting.get("sensory", [])) if setting.get("sensory") else "pleasant sights and sounds"
+        rules = "; ".join(setting.get("rules", [])) if setting.get("rules") else "friendship and kindness are valued"
 
-        # Frame-specific content
+        # === Frame Details ===
         title = frame.get("title", "")
         objective = frame.get("objective", "")
         beats = ". ".join(frame.get("beats", []))
+        background_details = ". ".join(frame.get("background_details", []))
+        dialogue_hooks = " ".join(frame.get("dialogue_hooks", []))
+        background_chatter = " ".join(frame.get("background_chatter", []))
 
+        # === Final Structured Prompt ===
         prompt = f"""
-            Create a children's book illustration for "{title}".
-            
-            Scene: {objective}, {beats}
-            
-            Characters: {'; '.join(char_descriptions)}
-            
-            Setting: {setting_desc} with {sensory_details}
-            
-            Style: Colorful, friendly, child-appropriate illustration with soft edges and bright colors.
-            Age group: children aged {bible.get("age_band", "6-8")} years old.
-            Mood: {bible.get("tone", "cheerful and magical")}.
-            
-            Make it look like a professional children's book illustration.
-            """
+    Create a professional **children’s book illustration** for the scene titled:
+    **"{title}"**
+
+    🎯 **Scene Objective:** {objective}.
+    🪄 **Story Beats:** {beats}.
+    🎨 **Setting:** {setting_desc}, featuring {sensory_details}.
+    🌈 **Mood & Tone:** {bible.get('tone', 'cheerful and magical')}.
+    🧍‍♂️ **Characters:** {'; '.join(char_descriptions)}.
+    📜 **World Rules:** {rules}.
+    🍞 **Background Details:** {background_details}.
+    💬 **Dialogue Mood:** The characters say things like: "{dialogue_hooks}".
+
+    **Speech Bubble Instructions:**
+    - Show short, clear speech bubbles near speaking characters.
+    - Each bubble should contain **one concise sentence (max 8–10 words)**.
+    - Use **clean, legible, rounded font** suitable for young children.
+    - **Do not include spelling or grammatical errors** in the text.
+    - Bubbles should blend naturally into the scene, not cover characters' faces.
+    - For background chatter (e.g., "{background_chatter}"), use lighter faded text or smaller bubbles if included.
+
+    **Visual Style:**
+    - Bright, warm, and friendly color palette  
+    - Soft edges and rounded forms  
+    - Natural lighting, simple composition  
+    - Expressive faces showing emotion and connection  
+    - Scene should visually match the story’s moral and tone  
+
+    **Story Context:**
+    - Age group: {bible.get('age_band', '6–8')} years  
+    - Theme: {bible.get('theme', 'friendship and sharing')}  
+    - Moral: {bible.get('moral', 'Sharing brings joy and friendship.')}  
+
+    **Avoid:** dark tones, complex realism, violence, or scary imagery.  
+    Make it look like a beautifully illustrated page from a modern picture book, ready for print.
+    """.strip()
 
         return prompt
+
+
+
 
 
     def _download_and_save_image(self, image_url: str, filename: str) -> str:

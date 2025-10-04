@@ -912,7 +912,7 @@ class GenerateStoryImageNode:
         user_id = state.get("user_id") or state.get("username", "anonymous_user")
         import time
         timestamp = int(time.time())
-        image_generator = ImageGenerator(use_mock=True, user_id=user_id, timestamp=timestamp)  # Real image generation
+        image_generator = ImageGenerator(use_mock=False, user_id=user_id, timestamp=timestamp)  # Real image generation
         image_paths = image_generator.generate_images_for_frames(frames, bible)
 
         # Create session dictionary with full frame data including scenes
