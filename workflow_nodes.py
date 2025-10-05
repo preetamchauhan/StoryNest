@@ -199,6 +199,8 @@ class ValidatePromptNode:
         from langchain_core.output_parsers import PydanticOutputParser
         from pydantic import BaseModel, Field
 
+        message_bus.publish_sync("animation", {"type": "start", "node": "ValidatePromptNode"})
+
         class ValidationResponse(BaseModel):
             verdict: str = Field(description="accept, revise, or reject")
             reason: str = Field(description="Justification for verdict")
@@ -289,7 +291,8 @@ class ValidatePromptNode:
             
             import time
             time.sleep(0.1)
-
+            
+        message_bus.publish_sync("animation", {"type": "stop", "node": "ValidatePromptNode"})
         return state
 
 
@@ -333,6 +336,8 @@ class ModeratePromptNode:
         from message_bus import message_bus
         from langchain_core.output_parsers import PydanticOutputParser
         from pydantic import BaseModel, Field
+        
+        message_bus.publish_sync("animation", {"type": "start", "node": "ModeratePromptNode"})
 
         class ModerationResponse(BaseModel):
             decision: str = Field(description="Either 'positive' or 'negative'")
@@ -394,7 +399,7 @@ class ModeratePromptNode:
                 print(f"Moderation parsing failed: {e}")
                 response = self.llm.invoke(messages)
                 state["response"] = response.content.strip()
-
+        message_bus.publish_sync("animation", {"type": "stop", "node": "ModeratePromptNode"})
         return state
 
 
@@ -479,7 +484,8 @@ class ImproveShortNode:
 
     def __call__(self, state):
         from message_bus import message_bus
-
+        message_bus.publish_sync("animation", {"type": "start", "node": "ImproveShortNode"})
+        message_bus.publish_sync("log", "🔄 Starting prompt improvement...")
         message_bus.publish_sync("log", "✏️ Prompt is too short, improving context...")
         print(f"ImproveShortNode - Original prompt: {state['prompt']}")
 
@@ -503,6 +509,7 @@ class ImproveShortNode:
         message_bus.publish_sync("log", f"✨ Enhanced prompt: {improved_prompt}")
 
         state["prompt"] = improved_prompt
+        message_bus.publish_sync("animation", {"type": "stop", "node": "ImproveShortNode"})
         return state
 
 
@@ -513,7 +520,11 @@ class ImproveLongNode:
         self.llm = llm
 
     def __call__(self, state):
+        
+        from message_bus import message_bus
 
+        message_bus.publish_sync("animation", {"type": "start", "node": "ImproveLongNode"})
+        message_bus.publish_sync("log", "🔄 Enhancing your story idea...")
         print(f"ImproveLongNode - Original prompt: {state['prompt']}")
 
         improve_prompt = get_improve_long_prompt(state["language"], state["age"])
@@ -536,6 +547,7 @@ class ImproveLongNode:
         print(f"ImproveLongNode - Enhanced prompt: {improved_prompt}")
 
         state["prompt"] = improved_prompt
+        message_bus.publish_sync("animation", {"type": "stop", "node": "ImproveLongNode"})
         return state
 
 
@@ -546,6 +558,10 @@ class KidStoryGeneratorNode:
         self.llm = llm
 
     def __call__(self, state):
+        
+        from message_bus import message_bus
+        message_bus.publish_sync("animation", {"type": "start", "node": "KidStoryGeneratorNode"})
+        message_bus.publish_sync("log", "🔄 Starting story creation...")
         # Use age_group from state or determine from age
         age_group = state.get("age_group")
         if not age_group:
@@ -653,7 +669,7 @@ class KidStoryGeneratorNode:
         state["story"] = {"title": title, "story_text": story_text}
         message_bus.publish_sync("log", f"✅ Story created: {title}")
         message_bus.publish_sync("story_complete", {"title": title, "story_text": story_text})
-
+        message_bus.publish_sync("animation", {"type": "stop", "node": "KidStoryGeneratorNode"})
         return state
 
 
@@ -665,6 +681,8 @@ class GenerateStoryImageNode:
         self.llm = llm
 
     def __call__(self, state):
+        from message_bus import message_bus
+        message_bus.publish_sync("animation", {"type": "start", "node": "GenerateStoryImageNode"})
         # Determine age band
         age_band = ""        
         if state["age"] <= 7:
@@ -958,5 +976,5 @@ class GenerateStoryImageNode:
             "log",
             f"📁 Created {len(frames)} story frames with images and saved individual frame files in story_outputs folder",
         )
-
+        message_bus.publish_sync("animation", {"type": "stop", "node": "GenerateStoryImageNode"})
         return state

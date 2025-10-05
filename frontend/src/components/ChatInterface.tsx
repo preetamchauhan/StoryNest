@@ -3,6 +3,7 @@ import { Button } from "./ui/button";
 import StoryModal from "./StoryModel";
 import StoryActions from "./StoryActions";
 import { useLanguage } from "../contexts/LanguageContext";
+import WorkflowAnimation from "./WorkflowAnimations";
 
 interface ChatInterfaceProps {
   events: any[];
@@ -22,6 +23,28 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     title?: string;
     text: string;
   } | null>(null);
+
+  const [activeAnimation, setActiveAnimation] = useState<string | null>(null);
+
+
+  // Handle animation events
+  useEffect(() => {
+    const animationEvents = events.filter(e => e.type === 'animation');
+    const lastAnimationEvent = animationEvents[animationEvents.length - 1];
+
+    if (lastAnimationEvent) {
+      console.log('Animation event:', lastAnimationEvent);
+
+      if (lastAnimationEvent.data.type === 'start') {
+        console.log('Starting animation for:', lastAnimationEvent.data.node);
+        setActiveAnimation(lastAnimationEvent.data.node);
+      } else if (lastAnimationEvent.data.type === 'stop') {
+        console.log('Stopping animation for:', lastAnimationEvent.data.node);
+        setActiveAnimation(null);
+      }
+    }
+  }, [events]);
+
 
   const getModeInfo = () => {
     switch (mode) {
@@ -94,14 +117,12 @@ p-3 sm:p-4 flex-shrink-0 rounded-t-2xl"
           <div className="flex items-center gap-2 sm:gap-3">
             <div
               className={`w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 
-        rounded-full flex items-center justify-center shadow-lg ${
-          isStreaming ? "animate-pulse" : ""
-        }`}
+        rounded-full flex items-center justify-center shadow-lg ${isStreaming ? "animate-pulse" : ""
+                }`}
             >
               <span
-                className={`text-white text-base sm:text-lg ${
-                  isStreaming ? "animate-bounce" : ""
-                }`}
+                className={`text-white text-base sm:text-lg ${isStreaming ? "animate-bounce" : ""
+                  }`}
               >
                 {isStreaming ? "🤔" : "🤖"}
               </span>
@@ -144,7 +165,21 @@ p-3 sm:p-4 flex-shrink-0 rounded-t-2xl"
         className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-3 sm:space-y-4"
         ref={messagesEndRef}
       >
+
         {events.map((event, index) => {
+          // Handle animation events
+          if (event.type === "animation") {
+            // if (event.data.type === "start") {
+            //   if (activeAnimation !== event.data.node) {
+            //     setActiveAnimation(event.data.node);
+            //   }
+            // } else if (event.data.type === "stop") {
+            //   if (activeAnimation === event.data.node) {
+            //     setActiveAnimation(null);
+            //   }
+            // }
+            return null;
+          }
           if (event.type === "log") {
             return (
               <div
@@ -396,7 +431,21 @@ p-3 sm:p-4 flex-shrink-0 rounded-t-2xl"
 
           return null;
         })()}
-        {isStreaming && events.length === 0 && (
+
+        {/* Workflow Animation - positioned after latest message */}
+        {activeAnimation && (
+          <div className="flex items-start gap-2 sm:gap-4">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-sm sm:text-lg flex-shrink-0 mt-1 shadow-md">
+              🤖
+            </div>
+            <div className="flex-1">
+              <WorkflowAnimation node={activeAnimation} isActive={true} />
+            </div>
+          </div>
+        )}
+
+
+        {isStreaming && events.length === 0 && !activeAnimation && (
           <div className="flex items-start gap-2 sm:gap-4">
             <div
               className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full 

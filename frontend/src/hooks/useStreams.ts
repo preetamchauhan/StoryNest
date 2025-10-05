@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 
 interface StreamEvent {
-  type: "event" | "error" | "final" | "log" | "story_complete" | "story_chunk";
+  type: "event" | "error" | "final" | "log" | "story_complete" | "story_chunk" | "animation";
   data: any;
 }
 
@@ -52,6 +52,7 @@ export const useStream = (): UseStreamReturn => {
           if (line.startsWith("data: ")) {
             try {
               const event = JSON.parse(line.slice(6));
+              console.log("Received event:", event);
               setEvents((prev) => [...prev, event]);
             } catch (e) {
               console.error("Failed to parse event:", e);

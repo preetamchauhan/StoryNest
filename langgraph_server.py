@@ -54,6 +54,8 @@ class LangGraphServer:
                         yield {"type": "story_complete", "data": msg["data"]}
                     elif msg["type"] == "story_chunk":
                         yield {"type": "story_chunk", "data": msg["data"]}
+                    elif msg["type"] == "animation":
+                        yield {"type": "animation", "data": msg["data"]}
                 await asyncio.sleep(0.1)        
 
             # Get any remaining messages after workflow completes
@@ -65,6 +67,8 @@ class LangGraphServer:
                     yield {"type": "error", "data": msg["data"]}
                 elif msg["type"] == "story_complete":
                     yield {"type": "story_complete", "data": msg["data"]}
+                elif msg["type"] == "animation":
+                    yield {"type": "animation", "data": msg["data"]}
 
             # Get final result
             try:
