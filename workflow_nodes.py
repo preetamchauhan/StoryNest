@@ -559,47 +559,60 @@ class KidStoryGeneratorNode:
             state["age_group"] = age_group
 
         import time
-
         timestamp = int(time.time())
 
         # Debug: Log language being used
         from message_bus import message_bus
-
         language_name = get_language_display_name(state["language"])
-        message_bus.publish_sync(
-            "log", f"📚 Generating story in: {language_name} for age group {age_group}"
-        )
+        message_bus.publish_sync("log", f"📚 Generating story in: {language_name} for age group {age_group}")
 
         from system_prompts import get_kid_story_generator_prompt
-
-        messages = [
-            SystemMessage(content=get_kid_story_generator_prompt()),
-            HumanMessage(
-                content=(
-                    f"Create a unique story with:\n"
-                    f"story_seed: {state['prompt']}\n"
-                    f"age_group: {age_group}\n"
-                    f"language: {state['language']}\n"
-                    f"timestamp: {timestamp}\n\n"
-                    f"IMPORTANT: Write the ENTIRE story in {state['language']} language. "
-                    f"Adapt content for age group {age_group}. "
-                    f"Create a completely different story each time, "
-                    f"Avoid repeating previous stories."
-                )
-            ),
-        ]
-        response = ""
         message_bus.publish_sync("log", "✨ Creating your magical story...")
 
-        # Try streaming first, fallback to invoke if no chunks
-        try:
-            chunks_received = False
-            inside_reasoning = False
+        # Step 1: Generate title first
+        # message_bus.publish_sync("log", "🪄 Creating story title...")
+        title_messages = [
+            SystemMessage(content=f"Generate a short, catchy title (max 8 words) with emojis for a children's story in {state['language']} language."),
+            HumanMessage(content=f"Story concept: {state['prompt']}\nAge group: {age_group}\nReturn only the title with no emojis, nothing else.")
+        ]
 
-            for chunk in self.llm.stream(messages):
+        try:
+            title_response = self.llm.invoke(title_messages).content.strip()
+            title = title_response.replace('"', '').replace("'", '').strip()
+            if len(title) > 100 or len(title.split()) > 10:
+                title = "Magical Adventure"
+        except Exception:
+            title = "Magical Adventure"
+
+        # Step 2: Generate story with the title
+        # message_bus.publish_sync("log", f"✍️ Writing story: {title}...")
+        story_messages = [
+            SystemMessage(content=get_kid_story_generator_prompt()),
+            HumanMessage(
+                content=f"""
+                Create a unique story with:
+                **story_seed:** {state['prompt']}
+                **age_group:** {age_group}
+                **language:** {state['language']}
+                **timestamp:** {timestamp}
+
+                IMPORTANT: Write the ENTIRE story in {state['language']} language.
+                Adapt content for age group {age_group}.
+                Create a completely different story each time.
+                Avoid repeating previous stories.
+                """
+            )
+        ]
+
+        story_response = ""
+        chunks_received = False
+        inside_reasoning = False
+
+        try:
+            for chunk in self.llm.stream(story_messages):
                 if chunk.content.strip():
                     chunks_received = True
-                    response += chunk.content
+                    story_response += chunk.content
 
                 # Track reasoning tags
                 chunk_content = chunk.content
@@ -607,73 +620,42 @@ class KidStoryGeneratorNode:
                     inside_reasoning = True
                 if "</reasoning>" in chunk_content:
                     inside_reasoning = False
-                    continue  # Skip the closing tag chunk
+                    continue
 
                 # Only send chunks outside of reasoning
                 if not inside_reasoning and chunk_content:
                     if not chunk_content.isspace():
                         message_bus.publish_sync("story_chunk", chunk_content)
 
-            # If no chunks received, fallback to normal invoke
+            # Fallback if no chunks received
             if not chunks_received:
-                response = self.llm.invoke(messages).content
-
-                # Simulate streaming by splitting response into chunks
-                words = response.split(" ")
-                chunk_size = 5  # send 5 words at a time
+                story_response = self.llm.invoke(story_messages).content
+                words = story_response.split(" ")
+                chunk_size = 5
                 for i in range(0, len(words), chunk_size):
                     chunk_text = " ".join(words[i : i + chunk_size]) + " "
                     message_bus.publish_sync("story_chunk", chunk_text)
                     time.sleep(0.1)
 
-        except Exception as e:
-            # Fallback if streaming fails — simulate streaming
-            response = self.llm.invoke(messages).content
-            words = response.split(" ")
+        except Exception:
+            # Fallback if streaming fails
+            story_response = self.llm.invoke(story_messages).content
+            words = story_response.split(" ")
             chunk_size = 5
             for i in range(0, len(words), chunk_size):
                 chunk_text = " ".join(words[i : i + chunk_size]) + " "
                 message_bus.publish_sync("story_chunk", chunk_text)
                 time.sleep(0.1)
 
-        # Clean up reasoning tags
-        response = re.sub(r"<reasoning>.*?</reasoning>", "", response, flags=re.DOTALL)
-
-        # Remove metadata before actual story if reasoning words appear
-        if "reasoning" in response.lower() or "word count" in response.lower():
-            sentences = response.split(".")
-            for sentence in reversed(sentences):
-                sentence = sentence.strip()
-                if len(sentence) > 20 and not any(
-                    word in sentence.lower()
-                    for word in [
-                        "reasoning",
-                        "word count",
-                        "craft",
-                        "produce",
-                        "generate",
-                        "schema",
-                        "json",
-                    ]
-                ):
-                    response = sentence + "."
-                    break
-
-        response = response.strip()
-
-        # Parse title + story from response
-        lines = response.split("\n")
-        title = lines[0] if lines else "Magical Adventure"
-        story_text = "\n".join(lines[2:]) if len(lines) > 2 else response
+        import re
+        story_text = re.sub(r"<reasoning>.*?</reasoning>", "", story_response, flags=re.DOTALL).strip()
 
         state["story"] = {"title": title, "story_text": story_text}
-
-        message_bus.publish_sync("log", f"📖 Story created: {title}")
-        message_bus.publish_sync(
-            "story_complete", {"title": title, "story_text": story_text}
-        )
+        message_bus.publish_sync("log", f"✅ Story created: {title}")
+        message_bus.publish_sync("story_complete", {"title": title, "story_text": story_text})
 
         return state
+
 
 
 class GenerateStoryImageNode:

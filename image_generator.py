@@ -351,11 +351,12 @@ class ImageGenerator:
             return self._generate_mock_images(frames_data, bible)
 
     def _create_image_prompt(self, frame: Dict[str, Any], bible: Dict[str, Any]) -> str:
-        """Create a detailed and style-controlled prompt for children's book illustration generation."""
+        """Create an enhanced, production-quality prompt for children's book image generation."""
+
         characters = bible.get("characters", [])
         setting = bible.get("setting", {})
 
-        # === Build Character Descriptions ===
+        # === Character descriptions ===
         char_descriptions = []
         for char in characters:
             traits = ", ".join(char.get("traits", []))
@@ -365,12 +366,12 @@ class ImageGenerator:
                 desc += f" but {flaw}"
             char_descriptions.append(desc)
 
-        # === Build Setting Description (fixed) ===
+        # === Setting description ===
         setting_desc = setting.get("time_place", "a magical land")
         sensory_details = ", ".join(setting.get("sensory", [])) if setting.get("sensory") else "pleasant sights and sounds"
         rules = "; ".join(setting.get("rules", [])) if setting.get("rules") else "friendship and kindness are valued"
 
-        # === Frame Details ===
+        # === Frame content ===
         title = frame.get("title", "")
         objective = frame.get("objective", "")
         beats = ". ".join(frame.get("beats", []))
@@ -378,45 +379,60 @@ class ImageGenerator:
         dialogue_hooks = " ".join(frame.get("dialogue_hooks", []))
         background_chatter = " ".join(frame.get("background_chatter", []))
 
-        # === Final Structured Prompt ===
+        # === Final prompt text ===
         prompt = f"""
-    Create a professional **children’s book illustration** for the scene titled:
-    **"{title}"**
+    Create a professional children's book illustration for the scene titled: "{title}"
 
-    🎯 **Scene Objective:** {objective}.
-    🪄 **Story Beats:** {beats}.
-    🎨 **Setting:** {setting_desc}, featuring {sensory_details}.
-    🌈 **Mood & Tone:** {bible.get('tone', 'cheerful and magical')}.
-    🧍‍♂️ **Characters:** {'; '.join(char_descriptions)}.
-    📜 **World Rules:** {rules}.
-    🍞 **Background Details:** {background_details}.
-    💬 **Dialogue Mood:** The characters say things like: "{dialogue_hooks}".
+    Scene Objective: {objective}.
+    Story Beats: {beats}.
+    Setting: {setting_desc}, featuring {sensory_details}.
+    Mood & Tone: {bible.get('tone', 'cheerful and magical')}.
+    Characters: {'; '.join(char_descriptions)}.
+    World Rules: {rules}.
+    Background Details: {background_details}.
+    Dialogue Examples: "{dialogue_hooks}"
 
-    **Speech Bubble Instructions:**
-    - Show short, clear speech bubbles near speaking characters.
-    - Each bubble should contain **one concise sentence (max 8–10 words)**.
-    - Use **clean, legible, rounded font** suitable for young children.
-    - **Do not include spelling or grammatical errors** in the text.
-    - Bubbles should blend naturally into the scene, not cover characters' faces.
-    - For background chatter (e.g., "{background_chatter}"), use lighter faded text or smaller bubbles if included.
+    Speech Bubble Instructions:
+    - Place all speech bubbles fully inside the visible frame with at least 10% margin from edges.
+    - Keep each bubble to one short sentence (max 6–8 words or 30 characters).
+    - Use a clean, rounded sans-serif font that is large and legible for children.
+    - Ensure high contrast between text and bubble (dark text on light bubble or white text on dark bubble).
+    - Add a thin outer stroke (2–4 px) or shadow to maintain text clarity on bright backgrounds.
+    - Make bubbles slightly semi-opaque (90–95%) so the background shows faintly through.
+    - Bubble tails must not cover faces or eyes. If space is limited, move the bubble to a nearby open area and connect it with a thin curved leader line.
+    - For faint background chatter (e.g., "{background_chatter}"), use smaller faded text or translucent mini-bubbles.
+    - Produce two image versions: (A) full image with bubbles and text, (B) identical text-free version for later overlay.
 
-    **Visual Style:**
-    - Bright, warm, and friendly color palette  
-    - Soft edges and rounded forms  
-    - Natural lighting, simple composition  
-    - Expressive faces showing emotion and connection  
-    - Scene should visually match the story’s moral and tone  
+    Visual Style:
+    - Bright, warm, friendly color palette
+    - Soft edges and rounded forms
+    - Expressive faces with visible emotions
+    - Simple, balanced composition
+    - Warm golden-hour lighting with soft shadows and gentle rim light
+    - Age group: {bible.get('age_band', '6–8')} years
+    - Theme: {bible.get('theme', 'friendship and sharing')}
+    - Moral: {bible.get('moral', 'Sharing brings joy and friendship.')}
 
-    **Story Context:**
-    - Age group: {bible.get('age_band', '6–8')} years  
-    - Theme: {bible.get('theme', 'friendship and sharing')}  
-    - Moral: {bible.get('moral', 'Sharing brings joy and friendship.')}  
+    Composition & Technical:
+    - Camera angle: mid-shot (waist-up) with slight low-angle, 35mm lens look
+    - Maintain consistent character appearances across all frames
+    - Use consistent palette: Primary #F6D6A8, Accent #FF9AA2, Accent2 #7FB77E, Neutral #F2F2F2
+    - Output: high-resolution PNG (≥ 3000 px long side), 300 DPI, with 0.25" bleed and safe margins
+    - Generate three labeled variations (A, B, C) and indicate which is best for clarity and emotion
 
-    **Avoid:** dark tones, complex realism, violence, or scary imagery.  
-    Make it look like a beautifully illustrated page from a modern picture book, ready for print.
+    Avoid:
+    - Dark or scary tones
+    - Overly realistic or photographic textures
+    - Distorted anatomy or extra limbs
+    - Watermarks, text artifacts, or unreadable bubbles
+    - Cluttered composition or heavy shadows
+
+    Goal:
+    Make it look like a beautifully illustrated page from a modern children's picture book — bright, magical, heartwarming, and full of life.
     """.strip()
 
         return prompt
+
 
 
 

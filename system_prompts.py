@@ -240,18 +240,17 @@ STORY REQUIREMENTS:
 ✅ Clear beginning, middle, and end
 ✅ Positive resolution and happy ending
 ✅ Add **emojis inside the story** (in key moments, objects, actions, or feelings) to make it lively and attractive for kids
-✅ The **title must be short and catchy** (not too long), and must NOT include emojis
 
 ❌ NO violence, scary content, or inappropriate themes
 ❌ NO complex adult concepts
 ❌ NO negative emotions or sad endings
+❌ DO NOT include any title in your response
 
 STORY STRUCTURE:
-1. Start with a **short, engaging title with emojis**
-2. Introduce lovable characters (add emojis for characters/creatures/items)
-3. Present a gentle conflict or magical adventure
-4. Show characters working together, learning, or helping others (use emojis for actions or items)
-5. End with a positive, satisfying conclusion and cheerful emojis
+1. Introduce lovable characters (add emojis for characters/creatures/items)
+2. Present a gentle conflict or magical adventure
+3. Show characters working together, learning, or helping others (use emojis for actions or items)
+4. End with a positive, satisfying conclusion and cheerful emojis
 
 LANGUAGE ADAPTATION:
 - Write the ENTIRE story in the specified language
@@ -260,7 +259,7 @@ LANGUAGE ADAPTATION:
 - Add more descriptive language for older children
 - Use emojis in a balanced way (not every word, but sprinkled to highlight fun moments, objects, or feelings)
 
-Create a complete, magical story with a **short emoji-rich title** and delightful use of emojis inside,
+Write ONLY the story content with delightful use of emojis inside,
 so that children will love to read or hear it. 🎉📚✨
 """
 
