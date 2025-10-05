@@ -184,56 +184,114 @@ async def serve_temp_audio(filename: str, request: Request):
 
 @app.get("/story-image/{story_id}/{filename}")
 async def serve_image(story_id: str, filename: str):
-    """Serve image files from LanceDB."""
+    """Serve image files from LanceDB (database-first approach for My Stories)."""
     try:
+        print(f"🟢 Serving image: story_id={story_id}, filename={filename}")
+
         # Get image data from LanceDB
         result = stories_table.search().where(f"id = '{story_id}'").limit(1).to_pandas()
 
-        if result.empty or pd.isna(result.iloc[0]["image_data"]):
-            # Fallback to temp file if no image in DB
-            temp_file_path = os.path.join("story_outputs", filename)
-            if os.path.exists(temp_file_path):
-                return FileResponse(
-                    temp_file_path, headers={"Cache-Control": "public, max-age=3600"}
-                )
-
+        if result.empty:
+            print(f"❌ Story {story_id} not found in database")
             raise HTTPException(
                 status_code=404,
-                detail=f"Image {filename} not found for story {story_id}",
+                detail=f"Story {story_id} not found",
             )
 
-        # Parse image data JSON
-        image_data_dict = json.loads(result.iloc[0]["image_data"])
+        # Check if image_data exists in database
+        if pd.notna(result.iloc[0]["image_data"]) and result.iloc[0]["image_data"]:
+            try:
+                # Parse image data JSON
+                image_data_dict = json.loads(result.iloc[0]["image_data"])
+                print(f"✅ Available images in database: {list(image_data_dict.keys())}")
 
-        if filename not in image_data_dict:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Image {filename} not found for story {story_id}",
+                if filename in image_data_dict:
+                    # Decode base64 image data from database
+                    image_bytes = base64.b64decode(image_data_dict[filename])
+                    print(f"🟢 Serving image from database: {len(image_bytes)} bytes")
+
+                    # Determine content type based on file extension
+                    content_type = "image/png"
+                    if filename.lower().endswith(".png"):
+                        content_type = "image/png"
+                    elif filename.lower().endswith(".gif"):
+                        content_type = "image/gif"
+                    elif filename.lower().endswith(".webp"):
+                        content_type = "image/webp"
+                    else:
+                        content_type = "application/octet-stream"
+
+                    from fastapi.responses import Response
+                    return Response(
+                        content=image_bytes,
+                        media_type=content_type,
+                        headers={"Cache-Control": "public, max-age=3600"},
+                    )
+                else:
+                    print(f"⚠️ Image {filename} not found in database image_data")
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Image {filename} not found for story {story_id}",
+                    )
+
+            except Exception as parse_error:
+                print(f"⚠️ Error parsing image_data from database: {parse_error}")
+        # Check if images are stored in frames_data (new format)
+        if pd.notna(result.iloc[0]["frames_data"]) and result.iloc[0]["frames_data"]:
+            try:
+                frames_data = json.loads(result.iloc[0]["frames_data"])
+                print(f"🔍 Checking frames_data for images")
+
+                # Look for the image in frames_data
+                for frame_key, frame_value in frames_data.items():
+                    if isinstance(frame_value, dict) and "image_data" in frame_value:
+                        if filename in frame_value["image_data"]:
+                            image_bytes = base64.b64decode(frame_value["image_data"][filename])
+                            print(f"✅ Serving image from frames_data: {len(image_bytes)} bytes")
+
+                            content_type = "image/jpeg"
+                            if filename.lower().endswith(".png"):
+                                content_type = "image/png"
+                            elif filename.lower().endswith(".gif"):
+                                content_type = "image/gif"
+                            elif filename.lower().endswith(".webp"):
+                                content_type = "image/webp"
+
+                            from fastapi.responses import Response
+                            return Response(
+                                content=image_bytes,
+                                media_type=content_type,
+                                headers={"Cache-Control": "public, max-age=3600"},
+                            )
+
+                print(f"⚠️ Image {filename} not found in frames_data")
+
+            except Exception as parse_error:
+                print(f"❌ Error parsing image_data: {parse_error}")
+
+
+        # Fallback to temp file (for newly generated images not yet saved)
+        temp_file_path = os.path.join("story_outputs", filename)
+        if os.path.exists(temp_file_path):
+            print(f"🟡 Serving image from temp file: {temp_file_path}")
+            from fastapi.responses import FileResponse
+            return FileResponse(
+                temp_file_path,
+                headers={"Cache-Control": "public, max-age=3600"},
             )
 
-        # Decode base64 image data
-        image_bytes = base64.b64decode(image_data_dict[filename])
-
-        # Determine content type based on file extension
-        content_type = "image/jpeg"
-        if filename.lower().endswith(".png"):
-            content_type = "image/png"
-        elif filename.lower().endswith(".gif"):
-            content_type = "image/gif"
-        elif filename.lower().endswith(".webp"):
-            content_type = "image/webp"
-
-        from fastapi.responses import Response
-
-        return Response(
-            content=image_bytes,
-            media_type=content_type,
-            headers={"Cache-Control": "public, max-age=3600"},
+        print(f"❌ Image {filename} not found in database or temp files")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Image {filename} not found for story {story_id}",
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"❌ Error serving image {filename} for story {story_id}: {e}")
+        print(f"⚠️ Error serving image {filename} for story {story_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to serve image: {str(e)}")
+
 
 
 # Initialize LanceDB and embedding model
@@ -957,11 +1015,15 @@ async def save_story(
         updated_image_paths = []
         if story.imagePaths:
             for image_path in story.imagePaths:
+
                 if image_path:
-                    image_filename = (
+                    if "/story-image/" in image_path:
+                        image_filename = image_path.split("story-images/")[-1]
+                    else:
+                        image_filename = (
                         image_path.split("/")[-1] if "/" in image_path else image_path
                     )
-                    temp_image_path = image_filename  # os.path.join("story_outputs", image_filename)
+                    temp_image_path = os.path.join("story_outputs", image_filename)
 
                     if os.path.exists(temp_image_path):
                         with open(temp_image_path, "rb") as f:
@@ -975,6 +1037,13 @@ async def save_story(
                             updated_image_paths.append(
                                 f"/story-image/{story.id}/{image_filename}"
                             )
+                    else:
+                        print(f"⚠️ No image file found: {temp_image_path or 'no imagePaths provided'}")
+                        try:
+                            files = os.listdir("story_outputs")
+                            print(f"📂 Files in story_outputs: {files}")
+                        except:
+                            print("❌ Could not list story_outputs directory")
 
         # Update frames data with new image URLs
         updated_frames_data = story.framesData
@@ -987,6 +1056,18 @@ async def save_story(
                     updated_frames_data[frame_key]["image_path"] = updated_image_paths[
                         i
                     ]
+                    
+                     # Embed base64 image data into frames_data for serve_image endpoint
+                    image_filename = updated_image_paths[i].split("/")[-1]
+                    if image_filename in image_data_dict:
+                        if "image_data" not in updated_frames_data[frame_key]:
+                            updated_frames_data[frame_key]["image_data"] = {}
+
+                        updated_frames_data[frame_key]["image_data"][image_filename] = image_data_dict[image_filename]
+                        print(f"📦 Embedded base64 data for {frame_key}: {image_filename}")
+
+                    print(f"🔄 Updated {frame_key} image_path to: {updated_image_paths[i]}")
+                    
 
         # Prepare data for LanceDB
         story_data = {
@@ -1022,6 +1103,12 @@ async def save_story(
         print(
             f"✅ Story saved with audio_url: {f'/story-audio/{story.id}' if audio_data else story.audioUrl}"
         )
+        
+        if updated_image_paths:
+            for i, path in enumerate(updated_image_paths[:3]):
+                print(f"🖼️ Image path {i+1}: {path}")
+                if len(updated_image_paths) > 3:
+                    print(f"🖼️ ... and {len(updated_image_paths) - 3} more image paths")
 
         return StoriesResponse(success=True, message="Story saved successfully")
 
@@ -1082,6 +1169,34 @@ async def get_stories(
             frames_data = json.loads(row["frames_data"]) if pd.notna(row["frames_data"]) else None
             image_paths = json.loads(row["image_paths"]) if pd.notna(row["image_paths"]) else []
 
+
+            # Ensure image paths point to database URLs (not temp file URLs)
+            if image_paths:
+                # Convert any temp file URLs to database URLs
+                database_image_paths = []
+                for img_path in image_paths:
+                    if "/story-image/" in img_path:
+                        # Already a database URL
+                        database_image_paths.append(img_path)
+                    elif "story-images/" in img_path:
+                        # Convert temp URL to database URL
+                        filename = img_path.split("story-images/")[-1]
+                        database_image_paths.append(f"/story-image/{row['id']}/{filename}")
+                    else:
+                        # Assume it's just a filename
+                        database_image_paths.append(f"/story-image/{row['id']}/{img_path}")
+                
+                image_paths = database_image_paths
+            # Also fix framesData image path URLs
+            if frames_data:
+                for frame_key, frame_value in frames_data.items():
+                    if isinstance(frame_value, dict) and "image_path" in frame_value:
+                        img_path = frame_value["image_path"]
+                        if "story-images/" in img_path and "/story-image/" not in img_path:
+                            filename = img_path.split("story-images/")[-1]
+                            frames_data[frame_key]["image_path"] = f"/story-image/{row['id']}/{filename}"
+
+            
             story = {
                 "id": row["id"],
                 "title": row["title"],
@@ -1147,6 +1262,25 @@ async def search_stories(
             has_images = pd.notna(row["image_data"]) and row["image_data"] is not None and row["image_data"] != ""
             frames_data = json.loads(row["frames_data"]) if pd.notna(row["frames_data"]) else None
             image_paths = json.loads(row["image_paths"]) if pd.notna(row["image_paths"]) else []
+            
+            # Ensure image paths point to database URLs (not temp file URLs)
+            if image_paths:
+                # Convert any temp file URLs to database URLs
+                database_image_paths = []
+                for img_path in image_paths:
+                    if "/story-image/" in img_path:
+                        # Already a database URL
+                        database_image_paths.append(img_path)
+                    elif "story-images/" in img_path:
+                        # Convert temp URL to database URL
+                        filename = img_path.split("story-images/")[-1]
+                        database_image_paths.append(f"/story-image/{row['id']}/{filename}")
+                    else:
+                        # Assume it's just a filename
+                        database_image_paths.append(f"/story-image/{row['id']}/{img_path}")
+                
+                image_paths = database_image_paths
+
             
             story = {
                 "id": row["id"],

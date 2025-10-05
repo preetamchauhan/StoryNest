@@ -226,7 +226,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
                 className="w-full h-full object-contain rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={() =>
                   setImagePopup(
-                    page.imagePath.startsWith("http") || page.imagepath.startsWith("/")
+                    page.imagePath.startsWith("http") || page.imagePath.startsWith("/")
                       ? page.imagePath.startsWith("http")
                       ? page.imagePath
                       : `http://localhost:8000${page.imagePath}`
