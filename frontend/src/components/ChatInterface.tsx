@@ -228,14 +228,14 @@ p-3 sm:p-4 flex-shrink-0 rounded-t-2xl"
           whitespace-pre-line"
                   >
                     {(() => {
-                      const errorText = event?.data?.error;
+                      const errorText = event?.data;
                       if (errorText?.includes("✨")) {
                         return errorText
                           .split("✨")
                           .map((part: string, i: number) => {
-                            if (i % 2 === 1 && part.trim()) {
+                            if (i % 2 === 1 && part?.trim()) {
                               // This is the text between sparkles - highlight it with copy button
-                              const suggestion = part.trim();
+                              const suggestion = part?.trim();
                               return (
                                 <span
                                   key={i}

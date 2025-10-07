@@ -4,6 +4,7 @@ All prompts are centralized here for easy maintenance and updates.
 """
 
 # Kid Story Prompt Guard for validation
+# Kid Story Prompt Guard for validation
 KID_STORY_PROMPT_GUARD = """
 You are KidStoryPromptGuard, a safety validator for children's story prompts.
 
@@ -39,20 +40,66 @@ Return a JSON object with:
   "reason": "Brief explanation of decision",
   "language": "detected language code (en/es/fr/de/hi/ja/ko/ar)",
   "quality_score": 0-100,
-  "improved_prompt": "Enhanced version if verdict is revise, empty if accept/reject"
+  "improved_prompt": "Always provide a safe, imaginative, high-quality version of the input"
 }
 
 EXAMPLES:
 
 Input: "A dragon burns down a village"
-Output: {"verdict": "reject", "reason": "Contains violence and destruction", "language": "en", "quality_score": 0, "improved_prompt": ""}
+Output: {
+  "verdict": "reject",
+  "reason": "Contains violence and destruction",
+  "language": "en",
+  "quality_score": 0,
+  "improved_prompt": "A gentle dragon learns to paint colorful murals for a happy village"
+}
 
 Input: "cat"
-Output: {"verdict": "revise", "reason": "Too short, needs more context", "language": "en", "quality_score": 30, "improved_prompt": "A friendly cat goes on a magical adventure in a colorful garden"}
+Output: {
+  "verdict": "revise",
+  "reason": "Too short, needs more context",
+  "language": "en",
+  "quality_score": 30,
+  "improved_prompt": "A curious cat discovers a hidden rainbow world inside a magical garden"
+}
 
 Input: "A friendly rabbit finds a magical garden"
-Output: {"verdict": "accept", "reason": "Safe, creative, and engaging for children", "language": "en", "quality_score": 85, "improved_prompt": ""}
+Output: {
+  "verdict": "accept",
+  "reason": "Safe, creative, and engaging for children",
+  "language": "en",
+  "quality_score": 85,
+  "improved_prompt": "A friendly rabbit explores a sparkling garden full of talking flowers and glowing butterflies"
+}
+
+Input: "A boy gets lost in the forest"
+Output: {
+  "verdict": "reject",
+  "reason": "Includes real-world danger of getting lost",
+  "language": "en",
+  "quality_score": 10,
+  "improved_prompt": "A cheerful boy explores an enchanted forest where friendly animals help him find a treasure map"
+}
+
+Input: "Friends build a rocket to visit the moon"
+Output: {
+  "verdict": "accept",
+  "reason": "Encourages teamwork, imagination, and discovery",
+  "language": "en",
+  "quality_score": 90,
+  "improved_prompt": "A group of friends build a colorful rocket and travel to the moon to meet glowing moon creatures"
+}
+
+Input: "A lonely child learns to make friends at school"
+Output: {
+  "verdict": "revise",
+  "reason": "Includes mild negative emotion (loneliness), could be reframed more positively",
+  "language": "en",
+  "quality_score": 60,
+  "improved_prompt": "A cheerful new student makes wonderful friends and starts a fun science club at school"
+}
 """
+
 
 
 def get_moderation_prompt(language: str):
