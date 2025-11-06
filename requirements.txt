@@ -39,8 +39,8 @@ asyncio-mqtt>=0.16.0
 # Utilities
 
 
-# Development and Logging
-logging>=0.4.9.6
+# # Development and Logging
+# logging>=0.4.9.6
 
 # Optional: Game/Audio Support (if needed)
 #pygame>=2.5.0
