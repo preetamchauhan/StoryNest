@@ -212,6 +212,15 @@ docker run -p 8000:8000 storynest-backend
 MIT License © 2025 Preetam Chauhan
 
 
+## 🎬 StoryNest Demo Video
+
+<video width="720" controls>
+  <source src="https://github.com/preetamchauhan/StoryNest/releases/download/v1.0-demo/storynest_demo.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+
+
 ## 🖼️ Screenshots
 
 > The app supports **multiple languages** (see the language menu), light and dark themes, and audio narration.
