@@ -73,9 +73,9 @@ Create a `.env` file in your project root:
 
 ```env
 OPENAI_API_KEY=your_openai_api_key_here
-LANGCHAIN_TRACING_V2=true
-LANGCHAIN_PROJECT=StoryNest
-SECRET_KEY=your_secret_key_here
+OPENAI_MODEL=gpt-4o-mini
+OPENAI_TEMPERATURE=0.8
+OPENAI_MAX_TOKENS=5000
 ```
 
 > ⚠️ Never commit `.env` or `.encryption.key` files to GitHub.
@@ -210,3 +210,70 @@ docker run -p 8000:8000 storynest-backend
 
 ## 🧾 License
 MIT License © 2025 Preetam Chauhan
+
+
+## 🖼️ Screenshots
+
+> The app supports **multiple languages** (see the language menu), light and dark themes, and audio narration.
+
+### 🔐 Login
+![Login](assets/01_login.png)
+
+### 🧭 Create Your Magical Story (Home)
+![Home - Create Story](assets/02_home_create_story.png)
+
+### 🌍 Language Selection (Multi-language support)
+![Language Menu](assets/03_language_menu.png)
+
+### 🌙 Dark Mode
+![Home - Dark Mode](assets/04_home_dark_mode.png)
+
+### 🎲 Surprise Me! (Start)
+![Surprise Ready](assets/05_surprise_ready.png)
+
+### ⚙️ Generation Progress (LangGraph pipeline)
+![Generation Progress](assets/06_generation_progress.png)
+
+### 📖 Story Viewer (Modal)
+![Story Modal](assets/07_story_modal.png)
+
+### 🎵 Creating Audio Narration
+![Audio Creation](assets/08_audio_creation_modal.png)
+
+### 🎧 Audio Player
+![Audio Player](assets/09_audio_player.png)
+
+### 📝 Guided Story Form
+![Guided Story](assets/10_guided_story_form.png)
+
+
+
+### 📚 My Stories — Library, Storybook, and Playback
+
+The **My Stories** section lets kids browse saved stories, open a **storybook** view with illustrated pages, and use the **audio player** to listen. It also showcases **multi-language** content (e.g., Arabic UI, French and Japanese storybooks).
+
+- **Arabic UI - Create Story (RTL support):**  
+  ![Arabic Home](assets/11_home_arabic.png)
+
+- **My Stories — grid of saved stories (page 1):**  
+  ![My Stories Grid 1](assets/12_my_stories_grid_page1.png)
+
+- **My Stories — more saved stories, multiple languages:**  
+  ![My Stories Grid 2](assets/13_my_stories_grid_page2_multilang.png)
+
+- **Story Book — French example:**  
+  ![Story Book French](assets/14_storybook_french.png)
+
+- **Story Book — Japanese example:**  
+  ![Story Book Japanese](assets/15_storybook_japanese.png)
+
+- **My Stories — audio player bar:**  
+  ![Audio Player Bar](assets/16_my_stories_audio_player.png)
+
+- **My Stories — player overlay active:**  
+  ![Audio Overlay](assets/17_my_stories_audio_overlay.png)
+  
+  
+### 📚 StoryNest - Api's
+
+![API's](assets/18_story_nest_apis.png)
