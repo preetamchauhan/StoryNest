@@ -128,7 +128,7 @@ class LangGraphModerationClient:
 
         # Connect modes to moderation
         workflow.add_edge("surprise_mode", "moderate")
-        workflow.add_edge("guided_mode", "moderate")
+        workflow.add_edge("guided_mode", "validate")
         workflow.add_edge("freeform_mode", "validate")
 
         # Moderation pipeline
