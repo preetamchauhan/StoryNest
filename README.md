@@ -219,6 +219,10 @@ MIT License © 2025 Preetam Chauhan
   Your browser does not support the video tag.
 </video>
 
+## 🎬 StoryNest Demo Video
+[![Watch the Demo](assets/02_home_create_story.png)](https://github.com/preetamchauhan/StoryNest/releases/download/v1.0-demo/storynest_demo.mp4)
+
+
 
 
 ## 🖼️ Screenshots
