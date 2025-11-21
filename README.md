@@ -5,6 +5,10 @@ It combines a **FastAPI (Python 3.11)** backend orchestrated through **LangGraph
 
 ---
 
+## 🎬 StoryNest Demo Video
+[![Watch the StoryNest Demo on YouTube](https://img.youtube.com/vi/NjWFSBPrhEE/0.jpg)](https://www.youtube.com/watch?v=NjWFSBPrhEE)
+
+
 ## 🧩 Tech Stack
 
 | Layer | Technology |
@@ -210,10 +214,6 @@ docker run -p 8000:8000 storynest-backend
 
 ## 🧾 License
 MIT License © 2025 Preetam Chauhan
-
-
-## 🎬 StoryNest Demo Video
-[![Watch the StoryNest Demo on YouTube](https://img.youtube.com/vi/NjWFSBPrhEE/0.jpg)](https://www.youtube.com/watch?v=NjWFSBPrhEE)
 
 
 ## 🖼️ Screenshots
